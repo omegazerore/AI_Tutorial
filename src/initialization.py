@@ -1,10 +1,6 @@
 import os
-import argparse
 import configparser
 
-from langchain.chat_models import ChatOpenAI
-
-from src import config
 from src.io.path_definition import get_file
 
 
