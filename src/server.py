@@ -22,7 +22,7 @@ model = ChatOpenAI(openai_api_key=os.environ['OPENAI_API_KEY'],
                    model_name="gpt-4o-2024-05-13", temperature=0)
 
 app = FastAPI(
-    title="hr assistant",
+    title="tutorial",
     version="1.0",
     description="A simple api server using Langchain's Runnable interfaces",
 )

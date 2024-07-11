@@ -20,3 +20,4 @@ langsmith==0.1.82
 langgraph
 pydub
 wikipedia
+faiss-cpu
