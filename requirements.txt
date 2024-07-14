@@ -17,7 +17,6 @@ sentence-transformers
 rank_bm25==0.2.2
 langserve[all]
 langsmith==0.1.82
-langgraph
 pydub
 wikipedia
 faiss-cpu
