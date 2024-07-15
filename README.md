@@ -86,6 +86,13 @@ Non-Agent Environment:
   - 3.部屬與配置本地 Llama-3 8B 量化模型
   - 4.GPT-4o 語音模型 Whisper-1 & TTS-1
 
+### Week 7
+
+- ReAct框架/Agent I：從入門到應用
+  - 1.ReAct Agent的基本概念與原理
+  - 2.如何建立agent tools
+  - 3.設計和構建Agent聊天機器人
+
 # DataScienceIntro
 
 1. 數據分析與處理 
