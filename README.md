@@ -22,11 +22,14 @@ We will setup two environments, one for agent, one for non-agent.
 
 In the Anacondo Prompt:
 
-Agent Environment:
-    
-    conda create -n llm_agent python=3.10 -y
-    conda activate llm_agent
-    pip install -r requirements_agent.txt
+[//]: # (Agent Environment:)
+
+[//]: # (    )
+[//]: # (    conda create -n llm_agent python=3.10 -y)
+
+[//]: # (    conda activate llm_agent)
+
+[//]: # (    pip install -r requirements_agent.txt)
   
 
 Non-Agent Environment:
@@ -68,3 +71,40 @@ Non-Agent Environment:
   - 1.LangChain Client/Server 功能實作(遠端服務部屬、客戶端服務取得)
   - 2.Streaming技術概述
   - 3.聊天機器人的基本概念與應用
+
+### Week 5
+
+- LLM延伸應用：進階檢索和影像標記
+  - 1.Image Captioning
+  - 2.進階檢索: 語意檢索。影像，表格，文字三位一體檢索。
+
+### Week 6
+
+- 本地語言模型架設與工具應用實戰
+  - 1.部屬與配置本地 Llama-2 13B 量化模型
+  - 2.常用控制參數介紹
+  - 3.部屬與配置本地 Llama-3 8B 量化模型
+  - 4.GPT-4o 語音模型 Whisper-1 & TTS-1
+
+# DataScienceIntro
+
+1. 數據分析與處理 
+   - 數據清理與處理技術（Pandas, NumPy） 
+   - 數據可視化（Matplotlib, Seaborn） 除了做PTT不然我不畫圖 
+   - 基礎統計學（平均值、中位數、標準差、分布）
+   - Null hypothesis 
+2. 機器學習基礎 
+   - 監督學習（線性回歸、決策樹)
+   - 無監督學習（K-means, PCA） 
+   - 模型評估與驗證（交叉驗證、混淆矩陣、ROC曲線）
+
+## Syllabus
+   
+### Week 1
+- 1-Sample T-Test
+- Loading Data with Pandas
+- Data Access with Requests
+
+### Week 2
+- 2-Sample T-Test
+- Visualization with Matplotlib
