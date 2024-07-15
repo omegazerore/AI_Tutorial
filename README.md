@@ -107,4 +107,5 @@ Non-Agent Environment:
 
 ### Week 2
 - 2-Sample T-Test
+- Binomial Test
 - Visualization with Matplotlib
