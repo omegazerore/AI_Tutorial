@@ -111,7 +111,6 @@ Non-Agent Environment:
 - 1-Sample t-Test
 - Loading Data with Pandas
 - Pandas Operations
-- Data Access with Requests
 
 ### Week 2
 - 2-Sample t-Test
@@ -122,6 +121,7 @@ Non-Agent Environment:
 - Other Distributions:
   - Poisson Distribution
   - Geometric Distribution
+- Data Access with Requests
 - Visualization with Matplotlib
 
 ### Week 4
