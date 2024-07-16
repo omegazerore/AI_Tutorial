@@ -108,11 +108,36 @@ Non-Agent Environment:
 ## Syllabus
    
 ### Week 1
-- 1-Sample T-Test
+- 1-Sample t-Test
 - Loading Data with Pandas
+- Pandas Operations
 - Data Access with Requests
 
 ### Week 2
-- 2-Sample T-Test
+- 2-Sample t-Test
 - Binomial Test
+- χ²-Test
+
+### Week 3
+- Other Distributions:
+  - Poisson Distribution
+  - Geometric Distribution
 - Visualization with Matplotlib
+
+### Week 4
+- Supervised Learning
+  - Linear Regression
+  - Logistic Regression
+  - Decision Tree
+- Unsupervised Learning
+
+### Week 5
+- Cross-Validation
+- Metrics
+  - Confusion Matrix
+  - ROC Curve
+  - precision, recall, F1-score
+  - regression metrics
+
+### Week 6
+- fill-mask fine-tuning with BERT
