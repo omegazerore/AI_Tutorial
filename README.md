@@ -133,19 +133,14 @@ Non-Agent Environment:
 - Visualization with Matplotlib
 
 ### Week 4
-- Supervised Learning
+- Supervised Learning and metrics
   - Linear Regression
   - Logistic Regression
   - Decision Tree
-- Unsupervised Learning
 
 ### Week 5
+- Unsupervised Learning
 - Cross-Validation
-- Metrics
-  - Confusion Matrix
-  - ROC Curve
-  - precision, recall, F1-score
-  - regression metrics
 
 ### Week 6
 - fill-mask fine-tuning with BERT
