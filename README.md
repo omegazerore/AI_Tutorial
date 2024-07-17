@@ -95,15 +95,23 @@ Non-Agent Environment:
 
 # DataScienceIntro
 
-1. 數據分析與處理 
-   - 數據清理與處理技術（Pandas, NumPy） 
-   - 數據可視化（Matplotlib, Seaborn） 除了做PTT不然我不畫圖 
-   - 基礎統計學（平均值、中位數、標準差、分布）
-   - Null hypothesis 
-2. 機器學習基礎 
-   - 監督學習（線性回歸、決策樹)
-   - 無監督學習（K-means, PCA） 
-   - 模型評估與驗證（交叉驗證、混淆矩陣、ROC曲線）
+[//]: # (1. 數據分析與處理 )
+
+[//]: # (   - 數據清理與處理技術（Pandas, NumPy） )
+
+[//]: # (   - 數據可視化（Matplotlib, Seaborn） 除了做PTT不然我不畫圖 )
+
+[//]: # (   - 基礎統計學（平均值、中位數、標準差、分布）)
+
+[//]: # (   - Null hypothesis )
+
+[//]: # (2. 機器學習基礎 )
+
+[//]: # (   - 監督學習（線性回歸、決策樹&#41;)
+
+[//]: # (   - 無監督學習（K-means, PCA） )
+
+[//]: # (   - 模型評估與驗證（交叉驗證、混淆矩陣、ROC曲線）)
 
 ## Syllabus
    
