@@ -20,3 +20,4 @@ langsmith==0.1.82
 pydub
 wikipedia
 faiss-cpu
+semantic-chunkers

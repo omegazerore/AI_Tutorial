@@ -12,8 +12,6 @@ from src.initialization import credential_init
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-case = "tutorial_example"
-
 
 credential_init()
 

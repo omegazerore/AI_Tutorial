@@ -139,8 +139,13 @@ Non-Agent Environment:
   - Decision Tree
 
 ### Week 5
-- Unsupervised Learning
 - Cross-Validation
-
+  - K-Fold
+  - Stratified K-Fold
+- Unsupervised Learning
+  - PCA (Principal Component Analysis)
+  - Hierarchical Clustering
+  - 
+  
 ### Week 6
 - fill-mask fine-tuning with BERT
