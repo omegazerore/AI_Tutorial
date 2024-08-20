@@ -21,3 +21,5 @@ pydub
 wikipedia
 faiss-cpu
 semantic-chunkers
+opencv-python
+pypdf
