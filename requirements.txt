@@ -4,7 +4,6 @@ tqdm
 openpyxl
 pyyaml
 langchain==0.2.5
-chromadb
 tiktoken
 pymupdf
 docarray
@@ -12,7 +11,7 @@ jupyterlab
 langchain-core==0.2.9
 langchain-community==0.2.5
 langchain-openai==0.1.14
-openai==1.35.10
+openai==1.55.3
 sentence-transformers
 rank_bm25==0.2.2
 langserve[all]
