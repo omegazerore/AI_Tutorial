@@ -16,6 +16,7 @@ def find_sum(residue, answer, remaining_list):
 
     for element in remaining_list:
         copy_of_remaining_list.pop(0)
+
         if residue - element > 0:
             find_sum(residue - element, answer + [element], copy_of_remaining_list)
         elif residue - element == 0:
