@@ -2,14 +2,14 @@
 AC 34ms 3.3MB
 '''
 
-a, b = list(map(int, input().split()))
+a, b = list(map(int, input("Please give the item numbers:").split()))
 
-n = int(input())
+n = int(input("number of customers"))
 
 person = 0
 
 for _ in range(n):
-    shopping_record = list(map(int, input().split()))
+    shopping_record = list(map(int, input("customer shopping record:").split()))
     a_list = []
     b_list = []
     for record in shopping_record:

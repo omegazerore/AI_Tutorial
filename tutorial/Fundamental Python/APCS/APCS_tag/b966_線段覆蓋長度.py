@@ -1,4 +1,10 @@
 '''
+給定一維座標上一些線段，求這些線段所覆蓋的長度，注意，重疊的部分只能算一次。
+
+例如給定 4 個線段：(5, 6)、(1, 2)、(4, 8)、(7, 9)，如下圖，線段覆蓋長度為 6 。
+
+
+
 AC
 76ms
 '''
@@ -25,16 +31,14 @@ while True:
 
         length = 0
 
-
-
         while sections:
             L, R = sections.pop()
             if L > section_merged[-1][1]:
                 section_merged.append([L, R])
             else:
-                if L <= section_merged[-1][1]:
-                    if R > section_merged[-1][1]:
-                        section_merged[-1][1] = R
+                # if L <= section_merged[-1][1]:
+                if R > section_merged[-1][1]:
+                    section_merged[-1][1] = R
 
         for section in section_merged:
             length += section[1] - section[0]
