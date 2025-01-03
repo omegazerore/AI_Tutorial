@@ -12,8 +12,21 @@ input_str = input()
 
 password = ""
 
-for a, b in zip(input_str[:-1], input_str[1:]):
+# for a, b in zip(input_str[:-1], input_str[1:]):
+#
+#     password += str(abs(ord(a) - ord(b)))
+#
+# print(password)
 
-    password += str(abs(ord(a) - ord(b)))
+for s, t in zip(input_str[:-1], input_str[1:]):
 
-print(password)
+    # python f-string
+
+    print(f"s = {s}; t = {t}")
+    distance = abs(ord(s) - ord(t))
+
+    print(f"distance = {distance}")
+    password = password + str(distance)
+
+    print(f"password = {password}")
+    print("******************************************")

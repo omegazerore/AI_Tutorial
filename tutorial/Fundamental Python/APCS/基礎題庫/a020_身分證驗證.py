@@ -7,6 +7,29 @@ mapping = {"A": '10', "B": '11', "C": '12', "D": '13', "E": '14',
 
 ids = input()
 
+# 1. English Character Transformation
+
+a = mapping[ids[0]]
+a_integer_list = []
+for b in a:
+    a_integer_list.append(int(b))
+
+a_digit_list = []
+for b in ids[1:]:
+    a_digit_list.append(int(b))
+
+for idx, i in enumerate(range(8, 0, -1)):
+    a_digit_list[idx] = a_digit_list[idx] * i
+
+final_list = a_integer_list + a_digit_list
+
+total = sum(final_list)
+
+if total%10 == 0:
+    print("real")
+else:
+    print("fake")
+
 numbers = [int(id) for id in mapping[ids[0]]] + [int(id) for id in ids[1:]]
 
 numbers[1] = numbers[1] * 9
