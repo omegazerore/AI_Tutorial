@@ -1,3 +1,8 @@
+"""
+sunspot Eval Loss: 536
+"""
+
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -10,40 +15,39 @@ class Seq2SeqWithAttention(nn.Module):
         # Second LSTM layer with a different hidden size
         # self.encoder_lstm2 = nn.LSTM(input_size=encoder_units, hidden_size=additional_encoder_units, batch_first=True)
         self.attention = nn.MultiheadAttention(embed_dim=encoder_units, num_heads=1, batch_first=True)
-        self.decoder_cell = nn.LSTMCell(input_size=encoder_units + 1, hidden_size=decoder_units)
+        self.decoder_cell = nn.LSTMCell(input_size=1, hidden_size=decoder_units)
         self.output_layer = nn.Linear(decoder_units, output_dim)
+
+        # Layer normalization
+        self.norm_attention = nn.LayerNorm(decoder_units)
 
     def forward(self, encoder_inputs, decoder_inputs, training=False):
         # Encoder
         encoder_outputs, (state_h, state_c) = self.encoder(encoder_inputs)
         state = (state_h[-1], state_c[-1])  # Extract the last layer's states
 
-        # Prepare for attention
+        # Decoder Loop
         all_outputs = []
-        decoder_input = decoder_inputs[:, 0:1, :]  # Start with the first time step
-        batch_size = encoder_inputs.size(0)
 
         for t in range(decoder_inputs.size(1)):
+
+            if t == 0 or training:
+                decoder_input = decoder_inputs[:, t:t+1, :].squeeze(1)
+            else:
+                decoder_input = decoder_output
+
+            state = self.decoder_cell(decoder_input, state)
             # Attention: Compute context vector based on encoder outputs and decoder hidden state
-            query = state[0].unsqueeze(1)  # Query: decoder hidden state at t-1
+            query = state[0].unsqueeze(1)
             context_vector, _ = self.attention(query, encoder_outputs, encoder_outputs)  # Context vector
 
-            # Combine context vector and current decoder input
-            decoder_combined_input = torch.cat([decoder_input, context_vector], dim=-1).squeeze(1)
-
-            # Pass combined input through the decoder LSTM cell
-            state = self.decoder_cell(decoder_combined_input, state)
+            # Residual connection in attention
+            query = context_vector + query
+            query = self.norm_attention(query)
 
             # Generate output for current time step
-            decoder_output = self.output_layer(state[0])  # Dense layer for final prediction
+            decoder_output = self.output_layer(query.squeeze(1))  # Dense layer for final prediction
             all_outputs.append(decoder_output.unsqueeze(1))
-
-            # Teacher Forcing: Use ground truth as next input during training
-            if training:
-                decoder_input = decoder_inputs[:, t:t + 1, :]
-            else:
-                # Autoregressive: Use model's own prediction as input
-                decoder_input = decoder_output.unsqueeze(1)
 
         # Concatenate all time step outputs
         outputs = torch.cat(all_outputs, dim=1)  # Shape: (batch_size, decoder_steps, output_dim)

@@ -1,5 +1,5 @@
 """
-sunspot Eval Loss:
+sunspot Eval Loss: 1038.2339
 """
 import torch
 import torch.nn as nn
