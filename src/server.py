@@ -6,6 +6,7 @@ import uvicorn
 from fastapi import FastAPI
 from langserve import add_routes
 from langchain.chat_models import ChatOpenAI
+from langchain_core.runnables import chain
 
 from src.initialization import credential_init
 
