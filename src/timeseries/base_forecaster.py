@@ -1,4 +1,7 @@
 import logging
+import json
+import os
+import pickle
 from typing import Optional
 
 import pandas as pd
@@ -8,16 +11,14 @@ from pytorch_forecasting.models.base_model import Prediction
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from src.models import timeseries as ts
+from src import timeseries as ts
+from src.io.path_definition import get_datafetch
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class BaseForecaster:
-
-    OPTIMIZER_TYPE = "AdamW"
-    DEFAULT_MAX_EPOCHS = 20
 
     def __init__(self, filename: Optional[str] = None):
 
@@ -107,7 +108,7 @@ class BaseForecaster:
         callbacks = [lr_logger, early_stop_callback, model_checkpoint] if self._validation else [lr_logger,
                                                                                                  model_checkpoint]
         # Determine the max number of training epochs
-        max_epochs = self.optimized_epoch if self.optimized_epoch is not None else self.DEFAULT_MAX_EPOCHS
+        max_epochs = self.optimized_epoch if self.optimized_epoch is not None else ts.DEFAULT_MAX_EPOCHS
 
         # Initialize PyTorch Lightning Trainer
         trainer = pl.Trainer(
@@ -136,7 +137,7 @@ class BaseForecaster:
         if self.optimized_epoch is None:
             try:
                 stopped_epoch = max(self._trainer.early_stopping_callbacks[0].state_dict()['stopped_epoch'],
-                                    self.DEFAULT_MAX_EPOCHS)
+                                    ts.DEFAULT_MAX_EPOCHS)
                 patience = self._trainer.early_stopping_callbacks[0].state_dict()['patience']
                 self.optimized_epoch = int(stopped_epoch - patience)
                 logger.info(f"Optimized epoch determined: {self.optimized_epoch}")
@@ -147,14 +148,18 @@ class BaseForecaster:
 
         pass
 
-    def optimize_hyperparameters(self, df: pd.DataFrame, target: str, n_trials: int = 20):
+    def optimize_hyperparameters(self, df: pd.DataFrame, n_trials: int = 20):
 
         pass
 
-    @staticmethod
-    def load_hyperparameters(filename: str):
+    def load_hyperparameters(self):
 
-        pass
+        hyperparameters_filename = os.path.join(get_datafetch(), f"{self.NAME}_best_hyperparameters.json")
+
+        with open(hyperparameters_filename, "rb") as fout:
+            study = pickle.load(fout)
+
+        return study.best_trial.params
 
     def predict(self, df: pd.DataFrame, filename: Optional[str]=None, plot: bool=False):
 
@@ -163,3 +168,10 @@ class BaseForecaster:
     @staticmethod
     def prediction2dataframe(predictions: Prediction) -> pd.DataFrame:
         pass
+
+    def _save_hyperparameters(self, study):
+
+        hyperparameters_filename = os.path.join(get_datafetch(), f"{self.NAME}_best_hyperparameters.json")
+
+        with open(hyperparameters_filename, "w") as f:
+            json.dump(study.best_params, f)
