@@ -1,0 +1,326 @@
+import os
+import logging
+import warnings
+from typing import Dict, Optional
+
+import pandas as pd
+from pytorch_forecasting import NHiTS, TimeSeriesDataSet
+from pytorch_forecasting.models.base_model import Prediction
+from pytorch_forecasting.data import NaNLabelEncoder
+from pytorch_forecasting.metrics import MQF2DistributionLoss
+
+from src.io.path_definition import get_target_folder
+from src.models import timeseries as ts
+from src.models.timeseries_unified.base_forecaster import BaseForecaster
+
+warnings.filterwarnings("ignore")
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def initialization(df: pd.DataFrame) -> pd.DataFrame:
+    """Initializes and preprocesses the time series dataframe
+
+    Args:
+        df (pd.DataFrame): Input dataframe containing time series data.
+
+    Returns:
+        p.DataFrame: Preprocessed dataframe with additional time index and categorical features
+    """
+    df[ts.TIME_IDX] = df['year'] * 12 + df['month']
+    df[ts.TIME_IDX] -= df[ts.TIME_IDX].min()
+    df['time'] = df.apply(lambda x: f"{x['year']}-{x['month']:02d}", axis=1)
+
+    return df
+
+
+class NHiTSForecaster(BaseForecaster):
+    """Class for training and making predictions using Temporal Fusion Transformer."""
+
+    OPTIMIZER_TYPE = "AdamW" # Define optimizer as a constant for clarity
+    DEFAULT_MAX_EPOCHS = 20
+    ts.MAX_PREDICTION_LENGTH = 12
+    ts.MAX_ENCODER_LENGTH = 36
+    ts.TIME_IDX = 'time_idx'
+    ts.TARGET = 'quantity'
+    ts.GROUP_IDS = ["brand", "retailer"]
+    ts.TIME_VARYING_UNKNOWN_REALS = [ts.TARGET]
+    ts.CATEGORICAL_ENCODERS = {"brand": NaNLabelEncoder(),
+                               "retailer": NaNLabelEncoder()}
+    MODEL_FOLDER = os.path.join(get_target_folder(), 'model', 'N-HiTS')
+
+    def __init__(self, filename: Optional[str]=None):
+
+        super().__init__(filename=filename)  # Call the BaseForecaster constructor if needed
+
+    def fit(self, df: pd.DataFrame, validation: bool, **kwargs):
+        """Fits the Temporal Fusion Transformer model.
+
+        Args:
+            df (pd.DataFrame): Training dataset.
+            validation (bool): Whether to use validation data.
+            **kwargs: Additional hyperparameters for model training.
+        """
+        model_filename = os.path.join(self.MODEL_FOLDER, f'{self._filename}.ckpt')
+
+        if os.path.isfile(model_filename):
+            os.remove(model_filename)
+
+        assert ts.TIME_IDX in df.columns, f"{ts.TIME_IDX} does not exist in df"
+        assert ts.TARGET in df.columns, f"{ts.TARGET} does not exist in df"
+
+        self._learning_rate = kwargs.get('learning_rate', 0.03)
+        self._hidden_size = kwargs.get('hidden_size', 64)
+        self._dropout = kwargs.get("dropout", 0.1)
+        self._gradient_clip_val = kwargs.get("gradient_clip_val", 0.1)
+        self._weight_decay = kwargs.get("weight_decay", 0.01)
+        self._backcast_loss_ratio = kwargs.get("backcast_loss_ratio", 0)
+
+        # Call parent `fit` method to handle preprocessing
+        self._assert(df, validation)
+
+        self._pipeline()
+
+    def _pipeline(self):
+        """Executes the end-to-end pipeline for model training.
+
+        This function:
+            - Loads the training configuration.
+            - Builds training and validation dataloaders.
+            - Initializes the PyTorch Lightning Trainer.
+            - Builds the Temporal Fusion Transformer (TFT) model.
+            - Starts the model training process.
+            - Determines the optimized number of epochs if not pre-defined.
+
+        Logs:
+            - Pipeline execution steps for better debugging and monitoring.
+
+        Returns:
+            None: This method does not return anything; it sets up and trains the model.
+        """
+        logger.info("Starting pipeline execution.")
+
+        # Load training configuration
+        self._load_training_config()
+        logger.info("Training configuration loaded.")
+
+        # Build train and validation dataloaders
+        if self._validation:
+            train_dataloaders, val_dataloaders = self._build_train_val_dataloader(self._training, self._df,
+                                                                                  predict=False)
+        else:
+            train_dataloaders = self._training.to_dataloader(train=True, batch_size=ts.BATCH_SIZE, num_workers=0)
+            val_dataloaders = None
+
+        logger.info("Train and validation dataloaders created.")
+
+        # Initialize Trainer
+        self._build_trainer()
+        logger.info("Trainer initialized.")
+
+        # Build N-HiTS model
+        self._build_model()
+        logger.info("N-Beats model is built.")
+
+        # Train the model
+        logger.info("Starting model training...")
+        self._trainer.fit(self._model, train_dataloaders=train_dataloaders, val_dataloaders=val_dataloaders)
+        logger.info("Model training completed.")
+
+        self._get_optimized_epoch()
+
+        logger.info("Pipeline execution completed successfully.")
+
+    def _load_training_config(self):
+        """Loads and configures the training dataset.
+
+        This method:
+        - Ensures the required columns exist in `self._df`.
+        - Converts `ts.TIME_IDX` to integers for consistency.
+        - Defines a training dataset using `TimeSeriesDataSet`.
+
+        Raises:
+            AssertionError: If any required column is missing in `self._df`.
+            KeyError: If `ts.TIME_IDX` column is missing while trying to convert its type.
+        """
+
+        required_columns = {"brand", "retailer", ts.TIME_IDX}
+        missing_columns = required_columns - set(self._df.columns)
+
+        if missing_columns:
+            raise ValueError(f"Missing required columns in self._df: {missing_columns}")
+
+        self._df[ts.TIME_IDX] = self._df[ts.TIME_IDX].astype(int)
+
+        if self._validation:
+            cutoff = self._df[ts.TIME_IDX].max() - ts.MAX_PREDICTION_LENGTH
+        else:
+            cutoff = self._df[ts.TIME_IDX].max()
+
+        self._training = TimeSeriesDataSet(
+            self._df.loc[lambda x: x.time_idx <= cutoff],
+            time_idx=ts.TIME_IDX,
+            target=ts.TARGET,
+            group_ids=ts.GROUP_IDS,
+            max_encoder_length=ts.MAX_ENCODER_LENGTH,
+            max_prediction_length=ts.MAX_PREDICTION_LENGTH,
+            time_varying_unknown_reals=ts.TIME_VARYING_UNKNOWN_REALS,
+            categorical_encoders=ts.CATEGORICAL_ENCODERS,
+        )
+
+    def predict(self, df: pd.DataFrame, filename: Optional[str]=None, plot: bool=False) -> pd.DataFrame:
+        """Makes predictions using the trained Temporal Fusion Transformer model.
+
+        Args:
+            df (pd.DataFrame): Input dataframe for prediction.
+
+        Returns:
+            pd.DataFrame: Dataframe containing predictions.
+        """
+
+        if filename is None:
+            model_filename = os.path.join(self.MODEL_FOLDER, f'best_model.ckpt')
+        else:
+            model_filename = filename
+        assert os.path.isfile(model_filename), f"{model_filename} does not exist."
+        self._load_best_model(model_filename)
+
+        self._df = df
+        self._load_training_config()
+        _, predict_dataloader = self._build_train_val_dataloader(self._training, df, predict=True)
+
+        predictions = self.best_model.predict(predict_dataloader,
+                                              trainer_kwargs=dict(accelerator="cpu"),
+                                              return_index=True)
+
+        # if plot:
+        #     raw_predictions = self.best_model.predict(predict_dataloader, mode="raw", return_x=True)
+        #     for idx in range(10):  # plot 10 examples
+        #         self.best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
+
+        return self.prediction2dataframe(predictions).dropna(subset=['y_pred'])
+
+    def _load_best_model(self, filename: str):
+        """Loads the best trained model from checkpoint.
+
+        Args:
+            filename (str): Path to the model checkpoint.
+        """
+        self.best_model = NHiTS.load_from_checkpoint(filename)
+
+    @staticmethod
+    def prediction2dataframe(predictions: Prediction) -> pd.DataFrame:
+        """Converts predictions into a structured dataframe.
+
+        Args:
+            predictions (Prediction): Model predictions.
+
+        Returns:
+            pd.DataFrame: Dataframe containing structured predictions.
+        """
+        data = []
+
+        for idx, row in predictions.index.iterrows():
+            time_idx = row[ts.TIME_IDX]
+            brand = row['brand']
+            retailer = row['retailer']
+            prediction = predictions[0][idx]
+            for idy, pred in enumerate(prediction):
+                data.append([brand, retailer, time_idx + idy, float(pred)])
+
+        return pd.DataFrame(data, columns=['brand', 'retailer', ts.TIME_IDX, 'y_pred'])
+
+    def _build_model(self):
+
+        net = NHiTS.from_dataset(
+            self._training,
+            # not meaningful for finding the learning rate but otherwise very important
+            learning_rate=self._learning_rate,
+            weight_decay=self._weight_decay,
+            hidden_size=self._hidden_size,
+            backcast_loss_ratio=self._backcast_loss_ratio,
+            dropout=self._dropout,  # between 0.1 and 0.3 are good values
+            optimizer=self.OPTIMIZER_TYPE,
+            loss=MQF2DistributionLoss(prediction_length=ts.MAX_PREDICTION_LENGTH)
+        )
+
+        logger.info(f"Number of parameters in network: {net.size() / 1e3:.1f}k")
+
+        self._model = net
+
+    def optimize_hyperparameters(self, df: pd.DataFrame, target: str, n_trials: int = 20):
+        """Optimizes hyperparameters using Optuna.
+
+        Args:
+            df (pd.DataFrame): Dataset for optimization.
+            target (str): Target variable name.
+            n_trials (int, optional): Number of trials. Defaults to 20.
+        """
+        # self._df = df
+        # self._target = target
+        # self._load_training_config()
+        # train_dataloader, val_dataloader = self._build_train_val_dataloader(self._training, self._df)
+        #
+        # # save study results - also we can resume tuning at a later point in time
+        # opuna_hyperparameters_filename = os.path.join(get_target_folder(), 'opuna_hyperparameters.pkl')
+        # with open(opuna_hyperparameters_filename, "wb") as fout:
+        #     pickle.dump(study, fout)
+        #
+        # # show best hyperparameters
+        # print(study.best_trial.params)
+        pass
+
+
+    @staticmethod
+    def load_hyperparameters(filename: str):
+        """Loads the best hyperparameters from a saved Optuna study.
+
+        Args:
+            filename (str): Path to the saved hyperparameters file.
+
+        Returns:
+            Dict: Dictionary containing the best hyperparameters.
+        """
+        # with open(filename, "rb") as fout:
+        #     study = pickle.load(fout)
+        #
+        # return study.best_trial.params
+
+        pass
+
+if __name__ == "__main__":
+    from datetime import datetime
+
+    from src.io.path_definition import get_project_dir
+
+    filename = os.path.join(get_project_dir(), 'sellout_experiement.csv')
+
+    df = pd.read_csv(filename, index_col=0, dtype={"quantity": float})
+
+    df = df[(df['country_iso'] == 'DE')]
+    df_agg = df.groupby(['retailer', "month", "year", "brand"]).agg(quantity=("quantity", "sum"))
+    df_agg.reset_index(inplace=True)
+
+    df_agg['time'] = df_agg[['year', 'month']].apply(lambda x: datetime.strptime(f"{x[0]}-{x[1]}", "%Y-%m"),
+                                                     axis=1)
+
+    df_agg[ts.TIME_IDX] = df_agg[['year', 'month']].apply(lambda x: 12 * x[0] + x[1], axis=1)
+    df_agg[ts.TIME_IDX] = df_agg[ts.TIME_IDX] - df_agg[ts.TIME_IDX].min()
+    df_agg[ts.TIME_IDX] = df_agg[ts.TIME_IDX].astype(int)
+
+    df_agg = df_agg[df_agg['brand'].isin(['Catrice', 'essence'])]
+
+    nhits = NHiTSForecaster()
+
+    # train-test split
+    cutoff = df_agg[ts.TIME_IDX].max() - ts.MAX_PREDICTION_LENGTH
+
+    df_train = df_agg[df_agg[ts.TIME_IDX] <= cutoff]
+
+    nhits.fit(df=df_train, validation=True)
+    nhits.fit(df=df_train, validation=False)
+
+    df_prediction = nhits.predict(df=df_agg, plot=True)
+
+    final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')

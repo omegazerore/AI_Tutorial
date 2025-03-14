@@ -1,0 +1,15 @@
+optuna-integration
+lightgbm
+xgboost
+catboost
+optuna
+pytorch-forecasting==1.3.0
+lightning==2.5.0.post0
+tensorboard
+optuna
+pandas
+jupyterlab
+scikit-learn
+statsmodels
+scipy
+torch==2.6.0
