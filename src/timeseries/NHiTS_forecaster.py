@@ -1,17 +1,20 @@
 import os
 import logging
 import warnings
+from argparse import Namespace
 from typing import Dict, Optional
+from functools import partial
 
+import optuna
+import numpy as np
 import pandas as pd
 from pytorch_forecasting import NHiTS, TimeSeriesDataSet
 from pytorch_forecasting.models.base_model import Prediction
-from pytorch_forecasting.data import NaNLabelEncoder
 from pytorch_forecasting.metrics import MQF2DistributionLoss
 
-from src.io.path_definition import get_target_folder
-from src.models import timeseries as ts
-from src.models.timeseries_unified.base_forecaster import BaseForecaster
+from src import timeseries as ts
+from src.io.path_definition import get_datafetch
+from src.timeseries.base_forecaster import BaseForecaster
 
 warnings.filterwarnings("ignore")
 
@@ -19,38 +22,22 @@ warnings.filterwarnings("ignore")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def initialization(df: pd.DataFrame) -> pd.DataFrame:
-    """Initializes and preprocesses the time series dataframe
-
-    Args:
-        df (pd.DataFrame): Input dataframe containing time series data.
-
-    Returns:
-        p.DataFrame: Preprocessed dataframe with additional time index and categorical features
-    """
-    df[ts.TIME_IDX] = df['year'] * 12 + df['month']
-    df[ts.TIME_IDX] -= df[ts.TIME_IDX].min()
-    df['time'] = df.apply(lambda x: f"{x['year']}-{x['month']:02d}", axis=1)
-
-    return df
-
 
 class NHiTSForecaster(BaseForecaster):
     """Class for training and making predictions using Temporal Fusion Transformer."""
 
-    OPTIMIZER_TYPE = "AdamW" # Define optimizer as a constant for clarity
-    DEFAULT_MAX_EPOCHS = 20
-    ts.MAX_PREDICTION_LENGTH = 12
-    ts.MAX_ENCODER_LENGTH = 36
-    ts.TIME_IDX = 'time_idx'
-    ts.TARGET = 'quantity'
-    ts.GROUP_IDS = ["brand", "retailer"]
-    ts.TIME_VARYING_UNKNOWN_REALS = [ts.TARGET]
-    ts.CATEGORICAL_ENCODERS = {"brand": NaNLabelEncoder(),
-                               "retailer": NaNLabelEncoder()}
-    MODEL_FOLDER = os.path.join(get_target_folder(), 'model', 'N-HiTS')
+    MODEL_FOLDER = os.path.join(get_datafetch(), 'model', 'NHiTS')
+    NAME = 'N-HiTS'
 
-    def __init__(self, filename: Optional[str]=None):
+    def __init__(self, args: Namespace, filename: Optional[str]=None):
+
+        ts.OPTIMIZER_TYPE = args.optimizer  # Define optimizer as a constant for clarity
+        ts.DEFAULT_MAX_EPOCHS = args.max_epochs
+        ts.MAX_PREDICTION_LENGTH = args.max_prediction_length
+        ts.MAX_ENCODER_LENGTH = args.max_encoder_length
+        ts.BATCH_SIZE = args.batch_size
+        ts.GROUP_IDS = args.group_ids
+        ts.TIME_VARYING_UNKNOWN_REALS = [ts.TARGET]
 
         super().__init__(filename=filename)  # Call the BaseForecaster constructor if needed
 
@@ -70,11 +57,11 @@ class NHiTSForecaster(BaseForecaster):
         assert ts.TIME_IDX in df.columns, f"{ts.TIME_IDX} does not exist in df"
         assert ts.TARGET in df.columns, f"{ts.TARGET} does not exist in df"
 
-        self._learning_rate = kwargs.get('learning_rate', 0.03)
-        self._hidden_size = kwargs.get('hidden_size', 64)
-        self._dropout = kwargs.get("dropout", 0.1)
+        self._learning_rate = kwargs.get('learning_rate', 0.01)
+        self._hidden_size = kwargs.get('hidden_size', 512)
+        self._dropout = kwargs.get("dropout", 0.0)
         self._gradient_clip_val = kwargs.get("gradient_clip_val", 0.1)
-        self._weight_decay = kwargs.get("weight_decay", 0.01)
+        self._weight_decay = kwargs.get("weight_decay", 0.001)
         self._backcast_loss_ratio = kwargs.get("backcast_loss_ratio", 0)
 
         # Call parent `fit` method to handle preprocessing
@@ -166,7 +153,6 @@ class NHiTSForecaster(BaseForecaster):
             max_encoder_length=ts.MAX_ENCODER_LENGTH,
             max_prediction_length=ts.MAX_PREDICTION_LENGTH,
             time_varying_unknown_reals=ts.TIME_VARYING_UNKNOWN_REALS,
-            categorical_encoders=ts.CATEGORICAL_ENCODERS,
         )
 
     def predict(self, df: pd.DataFrame, filename: Optional[str]=None, plot: bool=False) -> pd.DataFrame:
@@ -193,11 +179,6 @@ class NHiTSForecaster(BaseForecaster):
         predictions = self.best_model.predict(predict_dataloader,
                                               trainer_kwargs=dict(accelerator="cpu"),
                                               return_index=True)
-
-        # if plot:
-        #     raw_predictions = self.best_model.predict(predict_dataloader, mode="raw", return_x=True)
-        #     for idx in range(10):  # plot 10 examples
-        #         self.best_model.plot_prediction(raw_predictions.x, raw_predictions.output, idx=idx, add_loss_to_title=True)
 
         return self.prediction2dataframe(predictions).dropna(subset=['y_pred'])
 
@@ -241,7 +222,7 @@ class NHiTSForecaster(BaseForecaster):
             hidden_size=self._hidden_size,
             backcast_loss_ratio=self._backcast_loss_ratio,
             dropout=self._dropout,  # between 0.1 and 0.3 are good values
-            optimizer=self.OPTIMIZER_TYPE,
+            optimizer=ts.OPTIMIZER_TYPE,
             loss=MQF2DistributionLoss(prediction_length=ts.MAX_PREDICTION_LENGTH)
         )
 
@@ -249,57 +230,68 @@ class NHiTSForecaster(BaseForecaster):
 
         self._model = net
 
-    def optimize_hyperparameters(self, df: pd.DataFrame, target: str, n_trials: int = 20):
-        """Optimizes hyperparameters using Optuna.
+    def objective(self, trial: optuna.Trial, df: pd.DataFrame):
 
-        Args:
-            df (pd.DataFrame): Dataset for optimization.
-            target (str): Target variable name.
-            n_trials (int, optional): Number of trials. Defaults to 20.
-        """
-        # self._df = df
-        # self._target = target
-        # self._load_training_config()
-        # train_dataloader, val_dataloader = self._build_train_val_dataloader(self._training, self._df)
-        #
-        # # save study results - also we can resume tuning at a later point in time
-        # opuna_hyperparameters_filename = os.path.join(get_target_folder(), 'opuna_hyperparameters.pkl')
-        # with open(opuna_hyperparameters_filename, "wb") as fout:
-        #     pickle.dump(study, fout)
-        #
-        # # show best hyperparameters
-        # print(study.best_trial.params)
-        pass
+        params = {"learning_rate": trial.suggest_loguniform('learning_rate', 1e-4, 1e-2),
+                  "hidden_size":  trial.suggest_int('hidden_size', 128, 1024),
+                  "dropout": trial.suggest_uniform("dropout", 0, 0.3),
+                  # "gradient_clip_val": trial.suggest_uniform("gradient_clip_val", 0.05, 0.3),
+                  "weight_decay": trial.suggest_loguniform("weight_decay", 1e-4, 1e-2),
+                  # "backcast_loss_ratio": trial.suggest_uniform("backcast_loss_ratio", 0, 1)
+                  }
 
+        self._validation = True
 
-    @staticmethod
-    def load_hyperparameters(filename: str):
-        """Loads the best hyperparameters from a saved Optuna study.
+        try:
+            self.fit(df, validation=True, **params)
+        except RuntimeError as e:
+            logger.info(e)
+            return np.inf
 
-        Args:
-            filename (str): Path to the saved hyperparameters file.
+        self.optimized_epoch = None
 
-        Returns:
-            Dict: Dictionary containing the best hyperparameters.
-        """
-        # with open(filename, "rb") as fout:
-        #     study = pickle.load(fout)
-        #
-        # return study.best_trial.params
+        best_score = float(self._trainer.early_stopping_callbacks[0].state_dict()['best_score'])
 
-        pass
+        return best_score
+
+    def optimize_hyperparameters(self, df: pd.DataFrame, n_trials: int = 20):
+
+        objective = partial(self.objective, df=df)
+
+        study = optuna.create_study(direction='minimize')
+        study.optimize(objective, n_trials=n_trials)
+
+        # Show best hyperparameters
+        logger.info("Best hyperparameters:", study.best_params)
+        logger.info("Best score", study.best_value)
+
+        self._save_hyperparameters(study)
+
 
 if __name__ == "__main__":
+    import argparse
+
     from datetime import datetime
 
     from src.io.path_definition import get_project_dir
 
-    filename = os.path.join(get_project_dir(), 'sellout_experiement.csv')
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--optimizer', type=str, default='AdamW', help="The neural network optimizer")
+    parser.add_argument('--max_epochs', type=int, default='20')
+    parser.add_argument('--max_prediction_length', type=int, default=12)
+    parser.add_argument('--max_encoder_length', type=int, default=36)
+    parser.add_argument('--batch_size', type=int, default=16)
+    parser.add_argument('--group_ids', type=str, nargs='+')
+
+    args = parser.parse_args()
+
+    filename = os.path.join(get_project_dir(), 'src', 'timeseries', 'sellout_experiement.csv')
 
     df = pd.read_csv(filename, index_col=0, dtype={"quantity": float})
 
     df = df[(df['country_iso'] == 'DE')]
-    df_agg = df.groupby(['retailer', "month", "year", "brand"]).agg(quantity=("quantity", "sum"))
+    df_agg = df.groupby(['retailer', "month", "year", "brand"]).agg(y=("quantity", "sum"))
     df_agg.reset_index(inplace=True)
 
     df_agg['time'] = df_agg[['year', 'month']].apply(lambda x: datetime.strptime(f"{x[0]}-{x[1]}", "%Y-%m"),
@@ -311,16 +303,22 @@ if __name__ == "__main__":
 
     df_agg = df_agg[df_agg['brand'].isin(['Catrice', 'essence'])]
 
-    nhits = NHiTSForecaster()
+    nhits = NHiTSForecaster(args=args)
 
     # train-test split
     cutoff = df_agg[ts.TIME_IDX].max() - ts.MAX_PREDICTION_LENGTH
 
     df_train = df_agg[df_agg[ts.TIME_IDX] <= cutoff]
 
-    nhits.fit(df=df_train, validation=True)
-    nhits.fit(df=df_train, validation=False)
+    nhits.optimize_hyperparameters(df=df_train, n_trials=5)
+
+    params = nhits.load_hyperparameters()
+
+    nhits.fit(df=df_train, validation=True, **params)
+    nhits.fit(df=df_train, validation=False, **params)
 
     df_prediction = nhits.predict(df=df_agg, plot=True)
 
     final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')
+
+    final_df.to_csv(os.path.join(get_datafetch(), "sellout_forecast_NHiTS.csv"))
