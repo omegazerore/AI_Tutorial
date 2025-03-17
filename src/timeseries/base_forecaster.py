@@ -156,10 +156,10 @@ class BaseForecaster:
 
         hyperparameters_filename = os.path.join(get_datafetch(), f"{self.NAME}_best_hyperparameters.json")
 
-        with open(hyperparameters_filename, "rb") as fout:
-            study = pickle.load(fout)
+        with open(hyperparameters_filename, "r") as fout:
+            params = json.load(fout)
 
-        return study.best_trial.params
+        return params
 
     def predict(self, df: pd.DataFrame, filename: Optional[str]=None, plot: bool=False):
 
