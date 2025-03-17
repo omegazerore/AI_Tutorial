@@ -366,7 +366,7 @@ if __name__ == "__main__":
 
     df_train = df_agg[df_agg[ts.TIME_IDX] <= cutoff]
 
-    # nbeats.optimize_hyperparameters(df=df_train, n_trials=5)
+    nbeats.optimize_hyperparameters(df=df_train, n_trials=5)
 
     params = nbeats.load_hyperparameters()
 
@@ -374,8 +374,8 @@ if __name__ == "__main__":
     nbeats.fit(df=df_train, validation=False, **params)
 
     df_prediction = nbeats.predict(df=df_agg, plot=True)
-    #
-    # final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')
-    #
-    # final_df.to_csv(os.path.join(get_datafetch(), "sellout_forecast_NBeats.csv"))
+
+    final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')
+
+    final_df.to_csv(os.path.join(get_datafetch(), "sellout_forecast_NBeats.csv"))
 
