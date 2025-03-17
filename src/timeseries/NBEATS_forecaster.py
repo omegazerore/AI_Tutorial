@@ -366,15 +366,14 @@ if __name__ == "__main__":
 
     df_train = df_agg[df_agg[ts.TIME_IDX] <= cutoff]
 
-    nbeats.optimize_hyperparameters(df=df_train,)
+    # nbeats.optimize_hyperparameters(df=df_train, n_trials=5)
 
     params = nbeats.load_hyperparameters()
 
-    print("")
-    # nbeats.fit(df=df_train, validation=True)
-    # nbeats.fit(df=df_train, validation=False)
-    #
-    # df_prediction = nbeats.predict(df=df_agg, plot=True)
+    nbeats.fit(df=df_train, validation=True, **params)
+    nbeats.fit(df=df_train, validation=False, **params)
+
+    df_prediction = nbeats.predict(df=df_agg, plot=True)
     #
     # final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')
     #
