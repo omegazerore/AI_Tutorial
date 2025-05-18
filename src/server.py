@@ -13,7 +13,7 @@ from langchain_core.messages import AIMessage
 
 from src.initialization import credential_init
 from src.trendweek_report.deep_search import OpenAIWebSearch
-from src.trendweek_report.examples_with_deep_search import ExampleSearch, response_to_output_text
+from src.trendweek_report.examples_with_deep_search import SearchQueryAssistant, response_to_output_text
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -44,7 +44,7 @@ def final_output_2_ai_message(input_):
     return AIMessage(content=input_['final_output']['result'])
 
 
-example_search = ExampleSearch(model='gpt-4o-mini')
+example_search = SearchQueryAssistant(model='gpt-4o-mini')
 openai_websearch = OpenAIWebSearch(model="gpt-4o", temperature=0)
 
 pipeline_ = {'question': example_search.prompt_pipeline}|openai_websearch.pipeline|RunnablePassthrough.assign(final_output=itemgetter("context")|response_to_output_text|example_search.parsing_pipeline)|final_output_2_ai_message

@@ -45,3 +45,4 @@ def credential_init():
     os.environ['SERPER_API_KEY'] = credentials['SERPER_API_KEY'].get('api_key')
     os.environ['TAVILY_API_KEY'] = credentials['TAVILY_API_KEY'].get('api_key')
     os.environ['HuggingFace_API_KEY'] = credentials['HuggingFace_API_KEY'].get('api_key')
+    os.environ['FAL_KEY'] = credentials['fal_ai_image_caption'].get('api_key')
