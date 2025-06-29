@@ -32,7 +32,7 @@ if __name__ == "__main__":
     ts.GROUP_IDS = args.group_ids
     n_trials = args.n_trials
 
-    filename = os.path.join(get_project_dir(), 'src', 'timeseries', 'sellout_experiement.csv')
+    filename = os.path.join(get_project_dir(), 'src', 'logic', 'timeseries', 'sellout_experiement.csv')
 
     df = pd.read_csv(filename, index_col=0, dtype={"quantity": float})
 
