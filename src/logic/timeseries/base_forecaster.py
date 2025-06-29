@@ -1,7 +1,6 @@
 import logging
 import json
 import os
-import pickle
 from typing import Optional
 
 import pandas as pd
@@ -11,7 +10,7 @@ from pytorch_forecasting.models.base_model import Prediction
 from lightning.pytorch.callbacks import EarlyStopping, LearningRateMonitor, ModelCheckpoint
 from lightning.pytorch.loggers import TensorBoardLogger
 
-from src import timeseries as ts
+from src.logic import timeseries as ts
 from src.io.path_definition import get_datafetch
 
 # Configure logging

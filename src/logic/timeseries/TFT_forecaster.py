@@ -9,9 +9,9 @@ from pytorch_forecasting import TemporalFusionTransformer, TimeSeriesDataSet, Qu
 from pytorch_forecasting.models.temporal_fusion_transformer.tuning import optimize_hyperparameters
 from pytorch_forecasting.models.base_model import Prediction
 
-from src import timeseries as ts
+from src.logic import timeseries as ts
 from src.io.path_definition import get_datafetch
-from src.timeseries.base_forecaster import BaseForecaster
+from src.logic.timeseries.base_forecaster import BaseForecaster
 
 warnings.filterwarnings("ignore")
 
@@ -58,7 +58,7 @@ class TFTForecaster(BaseForecaster):
         self._hidden_size = kwargs.get('hidden_size', 16)
         self._dropout = kwargs.get("dropout", 0.1)
         self._gradient_clip_val = kwargs.get("gradient_clip_val", 0.1)
-        self._attention_head_size = kwargs.get("attention_head_size", 2)
+        self._attention_head_size = kwargs.get("attention_head_size", 4)
         self._hidden_continuous_size = kwargs.get("hidden_continuous_size", 8)
 
         # Call parent `fit` method to handle preprocessing

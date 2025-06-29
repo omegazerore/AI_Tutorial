@@ -1,20 +1,69 @@
+"""
+Initialize NBeats Model - use its :py:meth:`~from_dataset` method if possible.
+
+Based on the article
+`N-BEATS: Neural basis expansion analysis for interpretable time series
+forecasting <http://arxiv.org/abs/1905.10437>`_. The network has (if used as ensemble) outperformed all
+other methods
+including ensembles of traditional statical methods in the M4 competition. The M4 competition is arguably
+the most
+important benchmark for univariate time series forecasting.
+
+The :py:class:`~pytorch_forecasting.models.nhits.NHiTS` network has recently shown to consistently outperform
+N-BEATS.
+
+Args:
+    stack_types: One of the following values: “generic”, “seasonality" or “trend". A list of strings
+        of length 1 or ‘num_stacks’. Default and recommended value
+        for generic mode: [“generic”] Recommended value for interpretable mode: [“trend”,”seasonality”]
+    num_blocks: The number of blocks per stack. A list of ints of length 1 or ‘num_stacks’.
+        Default and recommended value for generic mode: [1] Recommended value for interpretable mode: [3]
+    num_block_layers: Number of fully connected layers with ReLu activation per block. A list of ints of length
+        1 or ‘num_stacks’.
+        Default and recommended value for generic mode: [4] Recommended value for interpretable mode: [4]
+    width: Widths of the fully connected layers with ReLu activation in the blocks.
+        A list of ints of length 1 or ‘num_stacks’. Default and recommended value for generic mode: [512]
+        Recommended value for interpretable mode: [256, 2048]
+    sharing: Whether the weights are shared with the other blocks per stack.
+        A list of ints of length 1 or ‘num_stacks’. Default and recommended value for generic mode: [False]
+        Recommended value for interpretable mode: [True]
+    expansion_coefficient_length: If the type is “G” (generic), then the length of the expansion
+        coefficient.
+        If type is “T” (trend), then it corresponds to the degree of the polynomial. If the type is “S”
+        (seasonal) then this is the minimum period allowed, e.g. 2 for changes every timestep.
+        A list of ints of length 1 or ‘num_stacks’. Default value for generic mode: [32] Recommended value for
+        interpretable mode: [3]
+    prediction_length: Length of the prediction. Also known as 'horizon'.
+    context_length: Number of time units that condition the predictions. Also known as 'lookback period'.
+        Should be between 1-10 times the prediction length.
+    backcast_loss_ratio: weight of backcast in comparison to forecast when calculating the loss.
+        A weight of 1.0 means that forecast and backcast loss is weighted the same (regardless of backcast and
+        forecast lengths). Defaults to 0.0, i.e. no weight.
+    loss: loss to optimize. Defaults to MASE().
+    log_gradient_flow: if to log gradient flow, this takes time and should be only done to diagnose training
+        failures
+    reduce_on_plateau_patience (int): patience after which learning rate is reduced by a factor of 10
+    logging_metrics (nn.ModuleList[MultiHorizonMetric]): list of metrics that are logged during training.
+        Defaults to nn.ModuleList([SMAPE(), MAE(), RMSE(), MAPE(), MASE()])
+    **kwargs: additional arguments to :py:class:`~BaseModel`.
+"""
+
 import os
 import logging
 import warnings
 from argparse import Namespace
-from typing import Dict, Optional
+from typing import Optional
 from functools import partial
 
 import optuna
 import numpy as np
 import pandas as pd
-from pytorch_forecasting import NHiTS, TimeSeriesDataSet
+from pytorch_forecasting import NBeats, TimeSeriesDataSet
 from pytorch_forecasting.models.base_model import Prediction
-from pytorch_forecasting.metrics import MQF2DistributionLoss
 
-from src import timeseries as ts
+from src.logic import timeseries as ts
 from src.io.path_definition import get_datafetch
-from src.timeseries.base_forecaster import BaseForecaster
+from src.logic.timeseries.base_forecaster import BaseForecaster
 
 warnings.filterwarnings("ignore")
 
@@ -23,15 +72,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class NHiTSForecaster(BaseForecaster):
+class NBeatsForecaster(BaseForecaster):
     """Class for training and making predictions using Temporal Fusion Transformer."""
 
-    MODEL_FOLDER = os.path.join(get_datafetch(), 'model', 'NHiTS')
-    NAME = 'N-HiTS'
+    MODEL_FOLDER = os.path.join(get_datafetch(), 'model', 'N-Beats')
+    NAME = 'N-Beats'
 
     def __init__(self, args: Namespace, filename: Optional[str]=None):
 
-        ts.OPTIMIZER_TYPE = args.optimizer  # Define optimizer as a constant for clarity
+        ts.OPTIMIZER_TYPE = args.optimizer # Define optimizer as a constant for clarity
         ts.DEFAULT_MAX_EPOCHS = args.max_epochs
         ts.MAX_PREDICTION_LENGTH = args.max_prediction_length
         ts.MAX_ENCODER_LENGTH = args.max_encoder_length
@@ -57,12 +106,13 @@ class NHiTSForecaster(BaseForecaster):
         assert ts.TIME_IDX in df.columns, f"{ts.TIME_IDX} does not exist in df"
         assert ts.TARGET in df.columns, f"{ts.TARGET} does not exist in df"
 
-        self._learning_rate = kwargs.get('learning_rate', 0.01)
-        self._hidden_size = kwargs.get('hidden_size', 512)
-        self._dropout = kwargs.get("dropout", 0.0)
+        self._learning_rate = kwargs.get('learning_rate', 0.03)
+        self._width_a = kwargs.get('width_a', 256)
+        self._width_b = kwargs.get('width_b', 2048)
+        self._dropout = kwargs.get("dropout", 0.1)
         self._gradient_clip_val = kwargs.get("gradient_clip_val", 0.1)
-        self._weight_decay = kwargs.get("weight_decay", 0.001)
-        self._backcast_loss_ratio = kwargs.get("backcast_loss_ratio", 0)
+        self._weight_decay = kwargs.get("weight_decay", 0.01)
+        self._backcast_loss_ratio = kwargs.get("backcast_loss_ratio", 1)
 
         # Call parent `fit` method to handle preprocessing
         self._assert(df, validation)
@@ -106,7 +156,7 @@ class NHiTSForecaster(BaseForecaster):
         self._build_trainer()
         logger.info("Trainer initialized.")
 
-        # Build N-HiTS model
+        # Build NBeats model
         self._build_model()
         logger.info("N-Beats model is built.")
 
@@ -153,6 +203,7 @@ class NHiTSForecaster(BaseForecaster):
             max_encoder_length=ts.MAX_ENCODER_LENGTH,
             max_prediction_length=ts.MAX_PREDICTION_LENGTH,
             time_varying_unknown_reals=ts.TIME_VARYING_UNKNOWN_REALS,
+            # categorical_encoders=ts.CATEGORICAL_ENCODERS,
         )
 
     def predict(self, df: pd.DataFrame, filename: Optional[str]=None, plot: bool=False) -> pd.DataFrame:
@@ -188,7 +239,7 @@ class NHiTSForecaster(BaseForecaster):
         Args:
             filename (str): Path to the model checkpoint.
         """
-        self.best_model = NHiTS.load_from_checkpoint(filename)
+        self.best_model = NBeats.load_from_checkpoint(filename)
 
     @staticmethod
     def prediction2dataframe(predictions: Prediction) -> pd.DataFrame:
@@ -214,16 +265,16 @@ class NHiTSForecaster(BaseForecaster):
 
     def _build_model(self):
 
-        net = NHiTS.from_dataset(
+        net = NBeats.from_dataset(
             self._training,
-            # not meaningful for finding the learning rate but otherwise very important
+            stack_types=['trend', 'seasonality'],
             learning_rate=self._learning_rate,
             weight_decay=self._weight_decay,
-            hidden_size=self._hidden_size,
+            widths=[self._width_a, self._width_b],
             backcast_loss_ratio=self._backcast_loss_ratio,
-            dropout=self._dropout,  # between 0.1 and 0.3 are good values
+            dropout=self._dropout,
             optimizer=ts.OPTIMIZER_TYPE,
-            loss=MQF2DistributionLoss(prediction_length=ts.MAX_PREDICTION_LENGTH)
+            # loss=QuantileLoss()
         )
 
         logger.info(f"Number of parameters in network: {net.size() / 1e3:.1f}k")
@@ -233,12 +284,12 @@ class NHiTSForecaster(BaseForecaster):
     def objective(self, trial: optuna.Trial, df: pd.DataFrame):
 
         params = {"learning_rate": trial.suggest_loguniform('learning_rate', 1e-4, 1e-2),
-                  "hidden_size":  trial.suggest_int('hidden_size', 128, 1024),
+                  # "width_a":  trial.suggest_int('width_a', 64, 512),
+                  # "width_b": trial.suggest_int('width_b', 768, 4096),
                   "dropout": trial.suggest_uniform("dropout", 0, 0.3),
                   # "gradient_clip_val": trial.suggest_uniform("gradient_clip_val", 0.05, 0.3),
                   "weight_decay": trial.suggest_loguniform("weight_decay", 1e-4, 1e-2),
-                  # "backcast_loss_ratio": trial.suggest_uniform("backcast_loss_ratio", 0, 1)
-                  }
+                  "backcast_loss_ratio": trial.suggest_uniform("backcast_loss_ratio", 0, 1)}
 
         self._validation = True
 
@@ -269,6 +320,7 @@ class NHiTSForecaster(BaseForecaster):
 
 
 if __name__ == "__main__":
+
     import argparse
 
     from datetime import datetime
@@ -285,6 +337,9 @@ if __name__ == "__main__":
     parser.add_argument('--group_ids', type=str, nargs='+')
 
     args = parser.parse_args()
+
+    # ts.CATEGORICAL_ENCODERS = {"brand": NaNLabelEncoder(),
+    #                            "retailer": NaNLabelEncoder()}
 
     filename = os.path.join(get_project_dir(), 'src', 'timeseries', 'sellout_experiement.csv')
 
@@ -303,22 +358,23 @@ if __name__ == "__main__":
 
     df_agg = df_agg[df_agg['brand'].isin(['Catrice', 'essence'])]
 
-    nhits = NHiTSForecaster(args=args)
+    nbeats = NBeatsForecaster(args=args)
 
     # train-test split
     cutoff = df_agg[ts.TIME_IDX].max() - ts.MAX_PREDICTION_LENGTH
 
     df_train = df_agg[df_agg[ts.TIME_IDX] <= cutoff]
 
-    nhits.optimize_hyperparameters(df=df_train, n_trials=5)
+    nbeats.optimize_hyperparameters(df=df_train, n_trials=5)
 
-    params = nhits.load_hyperparameters()
+    params = nbeats.load_hyperparameters()
 
-    nhits.fit(df=df_train, validation=True, **params)
-    nhits.fit(df=df_train, validation=False, **params)
+    nbeats.fit(df=df_train, validation=True, **params)
+    nbeats.fit(df=df_train, validation=False, **params)
 
-    df_prediction = nhits.predict(df=df_agg, plot=True)
+    df_prediction = nbeats.predict(df=df_agg, plot=True)
 
     final_df = pd.merge(df_agg, df_prediction, on=[ts.TIME_IDX, 'retailer', 'brand'], how='left')
 
-    final_df.to_csv(os.path.join(get_datafetch(), "sellout_forecast_NHiTS.csv"))
+    final_df.to_csv(os.path.join(get_datafetch(), "sellout_forecast_NBeats.csv"))
+
