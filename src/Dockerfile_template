@@ -1,0 +1,16 @@
+FROM cnvdataplatform.azurecr.io/conda:main
+
+WORKDIR /app
+COPY . .
+
+ENV PYTHONPATH "${PYTHONPATH}:/app"
+ENV ENVOPT_PREFIX=APP_
+
+RUN apt-get update -y
+
+# RUN apt-get reinstall libpaper1 -y
+RUN apt-get install build-essential poppler-utils libleptonica-dev tesseract-ocr libtesseract-dev python3-pil tesseract-ocr-eng tesseract-ocr-script-latn -y
+RUN apt-get install ffmpeg libsm6 libxext6  -y
+RUN conda create -n Black_Swan_Trend python=3.10 -y
+RUN conda run -n Black_Swan_Trend pip install -r requirements.txt
+CMD ["conda", "run", "-n", "Black_Swan_Trend", "python", "-m", "src.api.product_blueprint_v4", "--top_n", "10", "--phases", "Growing", "--brand", "Catrice"]
