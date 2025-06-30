@@ -1,7 +1,14 @@
-import os
 import configparser
+import logging
+import os
+
+from langchain_openai import ChatOpenAI
 
 from src.io.path_definition import get_file
+
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 def credential_init():
@@ -47,3 +54,26 @@ def credential_init():
     os.environ['HuggingFace_API_KEY'] = credentials['HuggingFace_API_KEY'].get('api_key')
     os.environ['FAL_KEY'] = credentials['fal_ai_image_caption'].get('api_key')
     os.environ["GOOGLE_API_KEY"] = credentials['gemini'].get('api_key')
+
+
+def model_activation(model_name: str) -> ChatOpenAI:
+
+    try:
+        credential_init()
+        if model_name in ['o4-mini', 'o3-pro', 'o3', 'o3-mini', 'o1', 'o1-mini', 'o1-pro']:
+            model = ChatOpenAI(openai_api_key=os.environ['OPENAI_API_KEY'],
+                               model_name=model_name)
+        else:
+            model = ChatOpenAI(openai_api_key=os.environ['OPENAI_API_KEY'],
+                               model_name=model_name, temperature=0)
+    except KeyError as e:
+        logger.critical("Missing required credentials or environment variables: %s", str(e))
+        raise
+    except ImportError as e:
+        logger.error("Failed to import model or library dependency: %s", str(e))
+        raise
+    except Exception as e:
+        logger.exception("Unexpected error during initialization")
+        raise
+
+    return model
