@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from src.logic.product_news import STEP_3_FILENAME
 from src.io.path_definition import get_datafetch
 from src.logic.product_news.websearch_service import activate_websearch_service, WebSearchService
-from src.logic.trend_week_report import build_standard_chat_prompt_template
+from src.logic import build_standard_chat_prompt_template
 from src.initialization import model_activation
 
 
