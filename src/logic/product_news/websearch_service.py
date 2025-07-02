@@ -15,25 +15,13 @@ class WebSearchService:
         self.search_context_size = search_context_size
         self.model = model
 
-    # def search(self, signature: str) -> str:
-    #     """Searches for information related to a brand signature.
-    #
-    #     Args:
-    #         signature (str): The brand signature string.
-    #
-    #     Returns:
-    #         str: Search result text from OpenAI.
-    #     """
-    #     response = self.client.chat.completions.create(
-    #         model=MODEL,
-    #         web_search_options={"search_context_size": SEARCH_CONTEXT_SIZE},
-    #         messages=[
-    #             {"role": "system", "content": "You will find the brand with a provided signature."},
-    #             {"role": "user", "content": f"signature: {signature}?"}
-    #         ]
-    #     )
-    #     return response.choices[0].message.content
     def search(self, messages: List[Dict], country_code: Optional[str]=None) -> str:
+
+        response = self.search_with_annotation(messages=messages, country_code=country_code)
+
+        return response.choices[0].message.content
+
+    def search_with_annotation(self, messages: List[Dict], country_code: Optional[str]=None):
 
         response = self.client.chat.completions.create(
             model=self.model,
@@ -47,7 +35,8 @@ class WebSearchService:
                                 },
             messages=messages
         )
-        return response.choices[0].message.content
+
+        return response
 
 
 def activate_websearch_service(model_name: str, search_context_size: str) -> WebSearchService:
