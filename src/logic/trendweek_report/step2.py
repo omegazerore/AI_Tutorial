@@ -16,7 +16,6 @@ import logging
 import os
 import sys
 from datetime import datetime
-from enum import Enum
 
 import mlflow
 import pandas as pd
@@ -26,8 +25,8 @@ from tqdm import tqdm
 from src.initialization import model_activation
 from src.io.path_definition import get_datafetch
 from src.logic.trendweek_report.future_vision.constants import Constants
-from src.logic.trendweek_report.future_vision.utils.paths import resolve_report_raw_path
-from src.logic.trendweek_report.future_vision.utils.run_utils import load_run_id
+from src.logic.trendweek_report.utils.paths import resolve_report_raw_path
+from src.logic.trendweek_report.utils.run_utils import load_run_id
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,7 +41,7 @@ def load_prompt_template(args: argparse.Namespace):
     Returns:
         Tuple of (prompt_template, output_parser).
     """
-    module_name = f"src.logic.trendweek_report.{args.scope}.note_pipeline"
+    module_name = f"src.logic.trend_week_report.{args.scope}.note_pipeline"
     spec = importlib.util.find_spec(module_name)
     if not spec:
         logger.error(f"Module '{module_name}' not found.")
@@ -98,15 +97,26 @@ def log_mlflow_metrics(run_id: str, args: argparse.Namespace, total_time):
             mlflow.log_metric("Time", total_time.seconds)
 
 
-def main(args: argparse.Namespace):
+def main(args: argparse.Namespace) -> int:
     """Main execution function.
 
     This function loads data, applies the language model pipeline,
     logs performance, and saves output notes.
     """
-    run_id = load_run_id(args)
-    mlflow.set_tracking_uri(uri=os.environ['MLFLOW_URL'])
-    mlflow.set_experiment(os.environ['WORKFLOWNAME'])
+
+    if args.scope not in {Constants.FUTURE_VISION, Constants.STRATEGY_INPUT}:
+        logger.error("Unsupported scope: %s", args.scope)
+        return 1
+
+    if sys.platform == 'win32':
+        mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
+        mlflow.set_experiment("app_run_v2")
+        with mlflow.start_run(run_name="trend_week_report_step3") as run:
+            run_id = run.info.run_id
+    else:
+        mlflow.set_tracking_uri(uri=os.environ['MLFLOW_URL'])
+        mlflow.set_experiment(os.environ['WORKFLOWNAME'])
+        run_id = load_run_id(args)
 
     model = model_activation(args.model_name)
     prompt_template, output_parser = load_prompt_template(args)
@@ -126,11 +136,14 @@ def main(args: argparse.Namespace):
     total_time = end - begin
 
     logger.info(f"{args.scope}_report_step2 total time: {total_time}")
-    log_mlflow_metrics(run_id, args, total_time)
 
     results = {note['filename']: note['result'].model_dump() for note in notes}
 
     save_results(results, args, ext=Constants.JSON)
+
+    log_mlflow_metrics(run_id, args, total_time)
+
+    return 0
 
 
 if __name__ == "__main__":
@@ -142,12 +155,6 @@ if __name__ == "__main__":
                         help='source of data. necessary for project `strategy_input`')
     parser.add_argument("--model_name", type=str, default="gpt-4.1-2025-04-14")
     args = parser.parse_args()
-
-    valid_scopes = {Constants.FUTURE_VISION, Constants.STRATEGY_INPUT}
-
-    if args.scope not in valid_scopes:
-        print(f"{args.scope} is not supported")
-        sys.exit()
 
     directory = os.path.join(
         get_datafetch(),

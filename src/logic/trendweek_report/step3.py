@@ -8,8 +8,8 @@ from datetime import datetime
 import mlflow
 
 from src.logic.trendweek_report.future_vision.constants import Constants
-from src.logic.trendweek_report.future_vision.utils.paths import resolve_report_raw_path
-from src.logic.trendweek_report.future_vision.utils.run_utils import load_run_id
+from src.logic.trendweek_report.utils.paths import resolve_report_raw_path
+from src.logic.trendweek_report.utils.run_utils import load_run_id
 
 
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +48,7 @@ def load_report_generator(args: argparse.Namespace):
         sys.exit(1)
     module = importlib.import_module(module_name)
 
-    report_json_file = resolve_report_raw_path(args, ext=Constants.CSV)
+    report_json_file = resolve_report_raw_path(args, ext=Constants.JSON)
 
     return module.TrendWeekReport(report_json_file=report_json_file,
                                   model=args.model_name)
@@ -76,6 +76,8 @@ def main(args) -> int:
         with mlflow.start_run(run_name="trend_week_report_step3") as run:
             run_id = run.info.run_id
     else:
+        mlflow.set_tracking_uri(uri=os.environ['MLFLOW_URL'])
+        mlflow.set_experiment(os.environ['WORKFLOWNAME'])
         run_id = load_run_id(args)
 
     begin = datetime.now()

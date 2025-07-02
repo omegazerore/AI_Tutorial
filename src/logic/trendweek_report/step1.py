@@ -1,26 +1,32 @@
 import argparse
+import csv
+import logging
 import os
 import sys
-import csv
-from typing import List
+from concurrent.futures import as_completed, ProcessPoolExecutor
+from datetime import datetime
 from pathlib import Path
 from tqdm import tqdm
-from datetime import datetime
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import List
 
-import nltk
-import pandas as pd
+from langchain_community.document_loaders import Docx2txtLoader
 import mlflow
+import nltk
 
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 
-from unstructured.partition.pdf import partition_pdf
-from langchain_community.document_loaders import Docx2txtLoader
+import pandas as pd
 from pydantic_settings import BaseSettings
+from unstructured.partition.pdf import partition_pdf
 
 from src.logic.trendweek_report import setup_logger
+from src.logic.trendweek_report.future_vision.constants import Constants
 from src.io.path_definition import get_datafetch
+
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class PartitionPDFSettings(BaseSettings):
@@ -121,11 +127,21 @@ def parse_file(path_tuple):
         return []
 
 
-def resolve_report_raw_path(args, ext: str) -> str:
-    filename = f"report_raw{'_test' if args.test else ''}.{ext}"
-    if args.scope == "future_vision":
-        return os.path.join(get_datafetch(), filename)
-    return os.path.join(get_datafetch(), args.source, filename)
+def resolve_output_path(args) -> str:
+    """Generates the appropriate output CSV path.
+
+    Args:
+        args (argparse.Namespace): Parsed CLI arguments.
+
+    Returns:
+        str: Output file path.
+    """
+
+    if args.test:
+        return os.path.join(get_datafetch(), *(["report_raw.csv"] if args.scope == "future_vision"
+                                                else [args.source, "report_raw_test.csv"]))
+    return os.path.join(get_datafetch(), *(["report_raw.csv"] if args.scope == "future_vision"
+                                            else [args.source, "report_raw.csv"]))
 
 
 def get_files_to_process(directory: str, already_processed: List[str],
@@ -190,7 +206,7 @@ def process_files_parallel(args, logger):
         logger.info(f"folder {directory} is not found")
         sys.exit()
 
-    output_filename = resolve_report_raw_path(args, "csv")
+    output_filename = resolve_output_path(args)
 
     if os.path.isfile(output_filename):
         df = pd.read_csv(output_filename)
@@ -199,8 +215,13 @@ def process_files_parallel(args, logger):
         append_to_csv(output_filename, [], header=True)
         processed_files = []
 
+    test_limit = None
+
+    if args.test:
+        test_limit = Constants.TEST_LIMIT
+
     file_tasks = get_files_to_process(directory=directory, already_processed=processed_files,
-                                      test_limit=20)
+                                      test_limit=test_limit)
 
     begin = datetime.now()
 
@@ -221,21 +242,19 @@ def main(args):
     """
     logger.info(f"Start {args.scope} report step1")
 
-    mlflow.set_tracking_uri(uri=os.environ['MLFLOW_URL'])
-    mlflow.set_experiment(os.environ['WORKFLOWNAME'])
+    platform = sys.platform
+
+    if platform == 'linux':
+        mlflow.set_tracking_uri(uri=os.environ['MLFLOW_URL'])
+        mlflow.set_experiment(os.environ['WORKFLOWNAME'])
+    else:
+        mlflow.set_tracking_uri(uri="http://127.0.0.1:8080")
+        experiment_name = f"trendweek_report_{args.scope}" if args.scope == Constants.FUTURE_VISION else f"trendweek_report_{args.scope}_{args.source}"
+        mlflow.set_experiment(experiment_name)
 
     with mlflow.start_run(run_name=os.environ['WORKFLOWRUN']) as run:
         run_id = run.info.run_id
-        if args.scope in ['future_vision']:
-            filename = os.path.join(get_datafetch(), f"{args.scope}_run_id.txt")
-        else:
-            filename = os.path.join(get_datafetch(), f"{args.scope}_{args.source}_run_id.txt")
-
-        logger.info(f"run_id is stored in {filename}")
-
-        # Subsequent process will need the same run_id again, so we need to track it.
-        with open(filename, "w") as f:
-            f.write(run_id)
+        save_run_id(run_id, args)
 
         logger.info(f"datafetch: {get_datafetch()}")
 
@@ -280,7 +299,8 @@ if __name__ == "__main__":
 
     if not os.path.isdir(dir):
         os.makedirs(dir)
-
-    logger = setup_logger(args.scope, args.source)
+        sys.exit(f"directory {dir} does not exist")
+    else:
+        logger.info(f"directory: {dir}")
 
     main(args=args)

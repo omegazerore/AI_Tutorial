@@ -18,3 +18,4 @@ class Constants(str, Enum):
     CSV = "csv"
     JSON = "json"
     WORD = "docx"
+    TEST_LIMIT = 20

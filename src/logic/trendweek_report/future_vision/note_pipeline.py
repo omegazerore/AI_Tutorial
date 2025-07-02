@@ -1,4 +1,5 @@
-from typing import List, Optional
+from typing import List, Literal
+from textwrap import dedent
 
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
@@ -6,9 +7,9 @@ from pydantic import BaseModel, Field
 from src.logic import build_standard_chat_prompt_template
 
 
-system_template = ("You are a helpful AI assistant as a personal assistant of a "
-                   "trend manager.\n"
-                   "You always do the best you can and pay attention to details.")
+system_template = dedent("""You are a helpful AI assistant as a personal assistant of a trend manager.
+                         You always do the best you can and pay attention to details.
+                         """)
 
 human_template = ("Please create a note based given the following context:\n"
                   "{text}.\n\n"
@@ -34,14 +35,31 @@ human_template = ("Please create a note based given the following context:\n"
 
 
 class SubTrend(BaseModel):
+    """Represents a specific subtrend within a larger megatrend.
 
+    Attributes:
+        name: The name of the subtrend.
+        definition: A short description or definition of the subtrend.
+        examples: Examples of products, brands, or innovations related to this subtrend.
+    """
     name: str = Field(description=("The name of the subtrend"))
     definition: str = Field(description=("The definition of the subtrend"))
     examples: str = Field(description=("Examples of the subtrend"))
 
 
 class MegaTrend(BaseModel):
-    name: str = Field(description=("The name of the megatrends, must be one of:\n\n"
+    """Represents one of the four predefined megatrend categories.
+
+    Attributes:
+        name: The name of the megatrend. Must be one of:
+            - Society
+            - Technology
+            - Environment
+            - Industry
+        content: A list of subtrends grouped under this megatrend.
+    """
+
+    name: Literal["Society", "Technology", "Environment", "Industry"] = Field(description=("The name of the megatrends, must be one of:\n\n"
                      "- Society: Related to consumer behavior, populations, or generational trends.\n"
                      "- Technology: Includes AI, AR, beauty tech, and other emerging technologies.\n"
                      "- Environment: Focuses on sustainability, ecological impact, and green innovation.\n"
@@ -51,10 +69,26 @@ class MegaTrend(BaseModel):
 
 
 class Trends(BaseModel):
+    """Container model for a list of megatrends.
+
+    Attributes:
+        trends: A list of megatrends, each containing associated subtrends.
+    """
     trends: List[MegaTrend] = Field(description="A list of MegaTrend content")
 
 
-def build_prompt_template(kwargs: Optional=None):
+def build_prompt_template():
+    """Builds a chat prompt template and a Pydantic output parser for trend extraction.
+
+    This function creates a chat prompt for extracting structured trend data from
+    natural language input, including system and human templates. The expected
+    output format is defined by a Pydantic model structure.
+
+    Returns:
+        tuple: A tuple containing:
+            - chat_prompt_template (BasePromptTemplate): The constructed prompt template.
+            - output_parser (PydanticOutputParser): The output parser based on the Trends model.
+    """
 
     output_parser = PydanticOutputParser(pydantic_object=Trends)
     format_instructions = output_parser.get_format_instructions()
@@ -65,5 +99,5 @@ def build_prompt_template(kwargs: Optional=None):
                   "partial_variables": {"format_instructions": format_instructions}}
             }
 
-    return build_standard_chat_prompt_template(input_), output_parser
+    return (build_standard_chat_prompt_template(input_), output_parser)
 
