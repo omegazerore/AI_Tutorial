@@ -37,7 +37,7 @@ from tqdm import tqdm
 from src.initialization import model_activation
 from src.logic.trendweek_report.future_vision import megatrend_aggregation_pipeline, reference_matching_pipeline
 from src.logic.trendweek_report.future_vision.utils_websearch import examples_with_deep_websearch
-from src.logic.trendweek_report.word_tool import add_indented_paragraph
+from src.logic.trendweek_report.utils.word_tool import add_indented_paragraph
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -347,10 +347,7 @@ class TrendWeekReport:
         Returns:
             A formatted Word document.
         """
-        from docx.shared import Pt, Inches
         from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-        from docx.oxml.ns import qn
-        from docx.oxml import OxmlElement
 
         reverse_map = {v: k for k, v in doc_index_map.items()}
         doc = Document()
