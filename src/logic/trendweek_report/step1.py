@@ -20,8 +20,7 @@ import pandas as pd
 from pydantic_settings import BaseSettings
 from unstructured.partition.pdf import partition_pdf
 
-from src.logic.trendweek_report import setup_logger
-from src.logic.trendweek_report.future_vision.constants import Constants
+from src.logic.trendweek_report.constants import Constants
 from src.io.path_definition import get_datafetch
 
 

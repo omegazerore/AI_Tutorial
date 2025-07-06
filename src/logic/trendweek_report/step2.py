@@ -24,7 +24,7 @@ from tqdm import tqdm
 
 from src.initialization import model_activation
 from src.io.path_definition import get_datafetch
-from src.logic.trendweek_report.future_vision.constants import Constants
+from src.logic.trendweek_report.constants import Constants
 from src.logic.trendweek_report.utils.paths import resolve_report_raw_path
 from src.logic.trendweek_report.utils.run_utils import load_run_id
 

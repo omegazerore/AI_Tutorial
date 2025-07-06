@@ -100,4 +100,3 @@ def build_prompt_template():
             }
 
     return (build_standard_chat_prompt_template(input_), output_parser)
-
