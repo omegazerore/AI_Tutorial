@@ -2,14 +2,15 @@ import argparse
 import importlib
 import importlib.util
 import logging
+import os
 import sys
 from datetime import datetime
 
 import mlflow
 
-from src.logic.trendweek_report.future_vision.constants import Constants
-from src.logic.trendweek_report.utils.paths import resolve_report_raw_path
-from src.logic.trendweek_report.utils.run_utils import load_run_id
+from src.logic.trend_week_report.constants import Constants
+from src.logic.trend_week_report.utils.paths import resolve_report_raw_path
+from src.logic.trend_week_report.utils.run_utils import load_run_id
 
 
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +85,11 @@ def main(args) -> int:
 
     report_generator = load_report_generator(args)
 
-    final_doc = report_generator.run()
+    if args.scope == Constants.FUTURE_VISION:
+        final_doc = report_generator.run(search_context_size=args.search_context_size,
+                                         search_model=args.search_model_name)
+    if args.scope == Constants.STRATEGY_INPUT:
+        final_doc = report_generator.run()
 
     end = datetime.now()
     total_time = end - begin
@@ -98,14 +103,74 @@ def main(args) -> int:
     return 0
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='Pipeline for project: future_vision or strategy_input'
+    )
+    parser.add_argument(
+        '--test',
+        action='store_true',
+        help='Enable debugging mode.'
+    )
+    parser.add_argument(
+        '--scope',
+        type=str,
+        required=True,
+        choices=['future_vision', 'strategy_input'],
+        help='Project scope. Allowed: future_vision or strategy_input.'
+    )
+    parser.add_argument(
+        '--source',
+        type=str,
+        required=False,
+        help=('Source of data. Required for scope "strategy_input". '
+              'Options: Beautystreams, ForesightFactory, globalData, Stylus, wgsn, OtherSource.')
+    )
+    parser.add_argument(
+        '--model_name',
+        type=str,
+        default='gpt-4.1-2025-04-14',
+        help='Model name (default: gpt-4.1-2025-04-14)'
+    )
+    parser.add_argument(
+        '--search_context_size',
+        type=str,
+        required=False,
+        help='OpenAI websearch search_context_size. Required if scope is future_vision.'
+    )
+    parser.add_argument(
+        '--search_model_name',
+        type=str,
+        required=False,
+        help='OpenAI websearch model. Required if scope is future_vision.'
+    )
+    args = parser.parse_args()
+
+    # Custom validation
+    if args.scope == Constants.FUTURE_VISION:
+        if not args.search_context_size:
+            parser.error(f'--search_context_size is required when --scope is {Constants.FUTURE_VISION}')
+        if not args.search_model_name:
+            parser.error(f'--search_model_name is required when --scope is {Constants.FUTURE_VISION}')
+    if args.scope == Constants.STRATEGY_INPUT and not args.source:
+        parser.error(f'--source is required when --scope is {Constants.STRATEGY_INPUT}')
+
+    return args
+
+
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--test', action='store_true', help='Flag to enable debugging')
-    parser.add_argument('--scope', type=str, help='project')
-    parser.add_argument('--source', type=str, required=False,
-                        help='source of data. necessary for project `strategy_input`')
-    parser.add_argument("--model_name", type=str, default="gpt-4.1-2025-04-14")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--test', action='store_true', help='Flag to enable debugging')
+    # parser.add_argument('--scope', type=str, help='project future_vision or strategy_input')
+    # parser.add_argument('--source', type=str, required=False,
+    #                     help='source of data. necessary for project `strategy_input`. Now we have Beautystreams, ForesightFactory, globalData, Stylus, wgsn, OtherSource')
+    # parser.add_argument("--model_name", type=str, default="gpt-4.1-2025-04-14")
+    # parser.add_argument("--search_context_size", type=str, help="OpenAI websearch search_context_size")
+    # parser.add_argument("--search_model_name", type=str, help="OpenAI websearch model")
+    # args = parser.parse_args()
+
+    args = parse_args()
 
     main(args)
