@@ -11,8 +11,8 @@ import pandas as pd
 from openai import OpenAI
 
 from src.initialization import credential_init
-from src.logic.product_news.websearch_service import WebSearchService
 from src.io.path_definition import get_datafetch
+from src.logic.product_news.websearch_service import WebSearchService
 from src.logic.product_news.signature_extraction import SignatureExtraction, Signature2Brand
 from src.logic.product_news import MAX_CONCURRENCY, STEP_2_TEXT_FILENAME, STEP_2_IMAGE_FILENAME, save_results_to_csv
 

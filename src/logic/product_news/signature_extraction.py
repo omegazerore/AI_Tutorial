@@ -1,13 +1,16 @@
-"""Module for extracting signatures from images and mapping them to brand names.
+"""Extracts text signatures from images and maps them to brand identities.
 
-This module defines two main classes:
-- SignatureExtraction: Extracts signature text from image data using a vision-language model.
-- Signature2Brand: Maps extracted signatures to brand names using web search and language models.
+This module provides:
 
-Dependencies include LangChain, OpenAI, and custom logic from the `src.logic` package.
+- `SignatureExtraction`: Extracts text signatures from images using a vision-language model.
+- `Signature2Brand`: Maps extracted signatures to cosmetic/skin-care brand names and country codes
+  using web search and a language model.
+
+Dependencies:
+    - LangChain
+    - OpenAI
+    - `src.logic` package (internal logic components)
 """
-
-import os
 import logging
 import time
 from typing import List, Dict, Tuple, Optional
@@ -22,8 +25,8 @@ from langchain.prompts import PromptTemplate, HumanMessagePromptTemplate, ChatPr
 from pydantic import BaseModel, Field
 
 from src.initialization import model_activation
+from src.logic import build_standard_chat_prompt_template
 from src.logic.product_news import image_to_base64, build_pipeline
-from src.logic.trend_week_report import build_standard_chat_prompt_template
 from src.logic.product_news.websearch_service import WebSearchService
 from src.logic.product_news import MAX_CONCURRENCY
 
@@ -47,10 +50,18 @@ class BrandOutput(BaseModel):
 
 
 class SignatureExtraction:
-    """Extracts text-based signatures from images using a vision-language pipeline."""
+    """Extracts handwritten or visual signatures from image files.
+
+    This class initializes a LangChain-compatible image-to-text pipeline that uses a
+    vision-language model to extract signature text from provided image paths.
+    """
 
     def __init__(self, model_name: str):
-        """Initializes the signature extraction pipeline."""
+        """Initializes the signature extraction pipeline with a given model.
+
+        Args:
+            model_name (str): Name of the vision-language model to activate.
+        """
         logger.info("Initializing SignatureExtraction")
 
         # Error handling is in the function model_activation
@@ -113,17 +124,18 @@ class SignatureExtraction:
         return pydantic_object.name
 
     def batch(self, batch: List[Dict[str, str]], max_concurrency: Optional[int]=None) -> List[Dict[str, str]]:
-        """Runs the signature extraction pipeline over a batch of image paths.
+        """Runs the signature extraction pipeline on a batch of images.
 
         Args:
-            batch (List[Dict[str, str]]): A list of dictionaries with 'image_path'.
+            batch (List[Dict[str, str]]): List of items containing 'image_path'.
+            max_concurrency (Optional[int]): Maximum number of concurrent model executions.
 
         Returns:
-            List[Dict[str, str]]: A list of results with extracted signatures.
+            List[Dict[str, str]]: List of results with extracted signature names.
 
         Raises:
-            ValueError: If an item lacks the 'image_path' key.
-            OpenAIError: If model execution fails.
+            ValueError: If 'image_path' is missing in any batch item.
+            OpenAIError: If model inference fails.
         """
         logger.info(f"Processing batch with {len(batch)} items")
         start_time = time.time()
@@ -151,7 +163,11 @@ class SignatureExtraction:
 
 
 class Signature2Brand:
-    """Maps extracted text signatures to brand names using web search and language models."""
+    """Maps extracted text signatures to brand names and country codes.
+
+    Uses LangChain pipelines combined with web search to determine which cosmetic or
+    skincare brand a signature belongs to.
+    """
 
     def __init__(self, model_name: str, web_search_service: WebSearchService):
         """Initializes the brand identification pipeline."""
@@ -232,17 +248,18 @@ class Signature2Brand:
         return build_standard_chat_prompt_template(input_)
 
     def batch(self, batch: List[Dict[str, str]], max_concurrency: Optional[int]=None) -> List[Dict[str, str]]:
-        """Runs the brand identification pipeline over a batch of signatures.
+        """Runs the brand identification pipeline on a batch of signature strings.
 
         Args:
-            batch (List[Dict[str, str]]): A list of dictionaries with 'signature'.
+            batch (List[Dict[str, str]]): List of items containing a 'signature'.
+            max_concurrency (Optional[int]): Maximum number of concurrent model executions.
 
         Returns:
-            List[Dict[str, str]]: A list of results with identified brands.
+            List[Dict[str, str]]: List of items containing brand and country_code fields.
 
         Raises:
-            ValueError: If an item lacks the 'signature' key.
-            OpenAIError: If model execution fails.
+            ValueError: If 'signature' is missing in any batch item.
+            OpenAIError: If model inference fails.
         """
         logger.info(f"Processing brand identification for {len(batch)} signatures")
         start_time = time.time()

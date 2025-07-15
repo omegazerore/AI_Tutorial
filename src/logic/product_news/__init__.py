@@ -1,5 +1,4 @@
 import io
-import os
 import base64
 from typing import List
 
@@ -9,6 +8,14 @@ from langchain_core.runnables import Runnable
 
 
 def image_to_base64(image_path):
+    """Converts an image to a Base64-encoded JPEG string.
+
+    Args:
+        image_path: Path to the image file or a file-like object.
+
+    Returns:
+        Base64-encoded string of the JPEG image.
+    """
     with Image.open(image_path) as image:
         # Save the Image to a Buffer
         buffered = io.BytesIO()
@@ -21,7 +28,16 @@ def image_to_base64(image_path):
 
 
 def save_results_to_csv(data, path: str, columns: List[str]) -> None:
+    """Saves structured data to a CSV file.
 
+    Args:
+        data: Either a list of dictionaries or a list of lists representing rows.
+        path: Output CSV file path.
+        columns: List of column names for the CSV.
+
+    Raises:
+        ValueError: If the data format is not supported.
+    """
     if isinstance(data, list) and data and isinstance(data[0], dict):
         # Case: list of dictionaries
         df = pd.DataFrame(data)
@@ -36,6 +52,19 @@ def save_results_to_csv(data, path: str, columns: List[str]) -> None:
 
 
 def build_pipeline(steps: list) -> Runnable:
+    """Builds a sequential pipeline by chaining Runnable steps.
+
+    Args:
+        steps: A list of Runnable objects to be executed in order.
+
+    Returns:
+        A single Runnable representing the composed pipeline.
+
+    Raises:
+        ValueError: If the steps list is empty.
+    """
+    if not steps:
+        raise ValueError("Steps list cannot be empty.")
 
     pipeline = steps[0]
     for step in steps[1:]:

@@ -15,23 +15,21 @@ class WebSearchService:
         self.search_context_size = search_context_size
         self.model = model
 
-    def search(self, messages: List[Dict], country_code: Optional[str]=None) -> str:
-
+    def search(self, messages: List[Dict], country_code: Optional[str] = None) -> str:
         response = self.search_with_annotation(messages=messages, country_code=country_code)
 
         return response.choices[0].message.content
 
-    def search_with_annotation(self, messages: List[Dict], country_code: Optional[str]=None):
-
+    def search_with_annotation(self, messages: List[Dict], country_code: Optional[str] = None):
         response = self.client.chat.completions.create(
             model=self.model,
             web_search_options={"search_context_size": self.search_context_size,
                                 "user_location": {
-                                        "type": "approximate",
-                                        "approximate": {
-                                            "country": country_code,
-                                        }
-                                    },
+                                    "type": "approximate",
+                                    "approximate": {
+                                        "country": country_code,
+                                    }
+                                },
                                 },
             messages=messages
         )

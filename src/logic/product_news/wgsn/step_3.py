@@ -7,15 +7,16 @@ NUSE Mousse Liptual – Ma Petite Coree
 The Dream Collection Whipped Shower Foam - Reichhaltiger Duschschaum | RITUALS
 Mousse de Banho Baunilha | Espuma hidratante para um banho perfumado
 """
-import ast
 import argparse
+import logging
 import os
-from typing import List
+from functools import partial
+from typing import List, Tuple
 
 import pandas as pd
-from textwrap import dedent
 from openai import OpenAI
-from langchain_core.runnables import chain, RunnablePassthrough
+from textwrap import dedent
+from langchain_core.runnables import RunnableLambda, RunnablePassthrough, Runnable
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
 
@@ -25,11 +26,17 @@ from src.logic.product_news.websearch_service import WebSearchService
 from src.logic.trend_week_report import build_standard_chat_prompt_template
 from src.logic.product_news import STEP_2_TEXT_FILENAME, STEP_2_IMAGE_FILENAME, STEP_3_FILENAME
 
-websearch_service_text: WebSearchService = None
-websearch_service_image: WebSearchService = None
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+REQUIRED_TEXT_COLUMNS = ['name', 'if_strategy', 'page_number', 'file', 'brand', 'country_code']
+COUNTRY_CODE_MAP = {"UK": "GB"}
 
 
 class Source(BaseModel):
+    """Schema for individual product source information."""
+
     content: str = Field(description="description of the product.")
     url: str = Field(description="url of the content source.")
     name: str = Field(description="The product, including the brand name.")
@@ -37,6 +44,8 @@ class Source(BaseModel):
 
 
 class Output(BaseModel):
+    """Schema for parsed output data containing product sources."""
+
     name: List[Source] = Field(description="A list of content and url")
 
 
@@ -45,54 +54,72 @@ format_instructions = output_parser.get_format_instructions()
 
 
 def safe_read_csv(path: str) -> pd.DataFrame:
+    """Safely reads a CSV file into a DataFrame.
+
+    Args:
+        path: The path to the CSV file.
+
+    Returns:
+        A pandas DataFrame if successful, otherwise an empty DataFrame.
+    """
     try:
         return pd.read_csv(path)
     except FileNotFoundError:
-        print(f"[ERROR] File not found: {path}")
+        logger.error(f"[ERROR] File not found: {path}")
     except pd.errors.EmptyDataError:
-        print(f"[ERROR] File is empty: {path}")
+        logger.error(f"[ERROR] File is empty: {path}")
     except Exception as e:
-        print(f"[ERROR] Failed to read {path}: {e}")
+        logger.error(f"[ERROR] Failed to read {path}: {e}")
     return pd.DataFrame()
 
 
-@chain
-def websearch_text(kwargs):
+def websearch_text(kwargs, websearch_engine: WebSearchService):
+    """Performs text-based product web search.
 
-    global websearch_service_text
+    Args:
+        kwargs: Dictionary containing product context including strategy, name, brand, and country_code.
+        websearch_engine: An instance of WebSearchService for querying.
+
+    Returns:
+        Web search result.
+    """
 
     strategy = kwargs['strategy']
     product = kwargs['name']
     brand = kwargs['brand']
     country_code = kwargs['country_code']
-    if country_code == 'UK':
-        country_code = "GB"
+    country_code = COUNTRY_CODE_MAP.get(country_code, country_code)
 
     messages = [{"role": "user",
                  "content": dedent(f"""
-                 What is the product {brand} {product} under the concept {strategy}?
+                 What is the cosmetic/skincare product {brand} {product} under the concept {strategy}?
                  Please find the best match and the corresponding product page, in which one can order the product.
                  Return only one product page.
                  """)}]
 
-    result = websearch_service_text.search(messages, country_code=country_code)
+    result = websearch_engine.search(messages, country_code=country_code)
 
     return result
 
 
-@chain
-def websearch_image(kwargs):
+def websearch_image(kwargs, websearch_engine: WebSearchService):
+    """Performs image-contextual product web search.
 
-    global websearch_service_image
+    Args:
+        kwargs: Dictionary containing image-related context including strategy, text, brand, and country_code.
+        websearch_engine: An instance of WebSearchService for querying.
+
+    Returns:
+        Web search result.
+    """
 
     strategy = kwargs['strategy']
     context = kwargs['text']
     brand = kwargs['brand']
     country_code = kwargs['country_code']
-    if country_code == 'UK':
-        country_code = "GB"
     if pd.isnull(kwargs['country_code']):
         country_code = None
+    country_code = COUNTRY_CODE_MAP.get(country_code, country_code)
 
     messages = [{"role": "user",
                  "content": f"What is the cosmetic or skin care product under the concept {strategy} with brand {brand}?\n\n"
@@ -102,12 +129,17 @@ def websearch_image(kwargs):
                             f"Ideally from the official website of the brand {brand}."
                  }]
 
-    result = websearch_service_image.search(messages, country_code=country_code)
+    result = websearch_engine.search(messages, country_code=country_code)
 
     return result
 
 
 def build_extraction_prompt():
+    """Builds a prompt template for extracting product content and URLs.
+
+    Returns:
+        A runnable prompt template for the extraction task.
+    """
 
     system_template = (
         "You are a helpful assistant. Your task is to extract all relevant product descriptions "
@@ -133,71 +165,40 @@ def build_extraction_prompt():
     return prompt_template
 
 
-def main(scope: str, source: str, model_name: str, search_context_size: str,
-         websearch_model: str):
+def parse_pipeline_output(output, source: str) -> List:
+    """Parses pipeline output and attaches source metadata.
 
-    global websearch_service_text, websearch_service_image
+    Args:
+        output: List of results from pipeline.
+        source: Label indicating the source type ('text' or 'image').
 
-    model = model_activation(model_name=model_name)
+    Returns:
+        A flat list of parsed product data entries.
+    """
 
-    credential_init()
-    openai_key = os.environ.get('OPENAI_API_KEY')
-    if not openai_key:
-        raise EnvironmentError("Missing OPENAI_API_KEY in environment variables.")
-    client = OpenAI(api_key=openai_key)
+    parsed_output = []
 
-    websearch_service_text = WebSearchService(client=client,
-                                              search_context_size=search_context_size,
-                                              model=websearch_model)
-    websearch_service_image = WebSearchService(client=client,
-                                               search_context_size=search_context_size,
-                                               model=websearch_model)
-
-    csv_filename = os.path.join(get_datafetch(), scope, source, STEP_2_TEXT_FILENAME)
-    df_text = safe_read_csv(csv_filename)
-    required_fields = ['name', 'if_strategy', 'page_number', 'file', 'brand', 'country_code']
-    for field in required_fields:
-        if field not in df_text.columns:
-            raise ValueError(f"Missing expected column: {field}")
-
-    csv_filename = os.path.join(get_datafetch(), scope, source, STEP_2_IMAGE_FILENAME)
-    df_image = safe_read_csv(csv_filename)
-    df_image.drop(labels=['websearch_text'], axis=1, inplace=True)
-
-    extract_prompt = build_extraction_prompt()
-    extract_pipeline = extract_prompt | model | output_parser
-
-    websearch_text_pipeline_ = RunnablePassthrough.assign(text=websearch_text) | RunnablePassthrough.assign(
-        results=extract_pipeline)
-
-    websearch_image_pipeline_ = RunnablePassthrough.assign(text=websearch_image) | RunnablePassthrough.assign(
-        results=extract_pipeline)
-
-    output = []
-
-    batch = df_text[df_text['if_strategy']].to_dict(orient="records")
-    # for _, row in df_text.iterrows():
-    #     result_as_dict = row.to_dict()
-    #     if row['if_strategy']:
-    #         try:
-    #             products = ast.literal_eval(row['products'])
-    #         except (ValueError, SyntaxError) as e:
-    #             print(f"Error parsing products for row {row}: {e}")
-    #             products = []
-    #         for product in products:
-    #             input_ = result_as_dict.copy()
-    #             input_['product'] = product
-    #             batch.append(input_)
-
-    output_text = websearch_text_pipeline_.batch(batch)
-    for c in output_text:
+    for c in output:
         results = c['results'].name
-        del c['results']
         for result in results:
-            c_copy = c.copy()
+            c_copy = {k: v for k, v in c.items() if k != 'results'}
             c_copy.update(result.model_dump())
-            c_copy["source_data_type"] = 'text'
-            output.append(c_copy)
+            c_copy["source_data_type"] = source
+            parsed_output.append(c_copy)
+
+    return parsed_output
+
+
+def prepare_image_data(df_image: pd.DataFrame, df_text: pd.DataFrame) -> pd.DataFrame:
+    """Prepares image DataFrame by merging and cleaning.
+
+    Args:
+        df_image: DataFrame with image data.
+        df_text: DataFrame with textual context data.
+
+    Returns:
+        A merged DataFrame with contextual fields.
+    """
 
     df_metadata = df_text.drop_duplicates(subset=['page_number', 'file'])[['page_number', 'file', 'strategy', 'text']]
 
@@ -205,19 +206,133 @@ def main(scope: str, source: str, model_name: str, search_context_size: str,
     # df_image = df_image[df_image['image_file_name']=='figure-10-3.jpg']
     df_image.dropna(subset=['brand'], inplace=True)
 
-    batch = df_image.to_dict(orient="records")
-    output_image = websearch_image_pipeline_.batch(batch)
+    return df_image
 
-    for c in output_image:
-        results = c['results'].name
-        del c['results']
-        for result in results:
-            c_copy = c.copy()
-            c_copy.update(result.model_dump())
-            c_copy["source_data_type"] = 'image'
-            output.append(c_copy)
 
-    output_df = pd.DataFrame(output)
+def run_pipeline(df_text: pd.DataFrame, df_image: pd.DataFrame, text_pipeline: Runnable, image_pipeline: Runnable) -> pd.DataFrame:
+    """Runs the full data processing pipeline for text and image data.
+
+    Args:
+        df_text: DataFrame with text-based input records.
+        df_image: DataFrame with image-based input records.
+        text_pipeline: Runnable text pipeline.
+        image_pipeline: Runnable image pipeline.
+
+    Returns:
+        A DataFrame with combined parsed output from both pipelines.
+    """
+    output = []
+
+    try:
+        batch_text = df_text[df_text['if_strategy']].to_dict(orient="records")
+        output_text = text_pipeline.batch(batch_text)
+        output.extend(parse_pipeline_output(output_text, 'text'))
+    except Exception as e:
+        logger.exception("[ERROR] Failed in text pipeline: %s", e)
+
+    try:
+        df_image = prepare_image_data(df_image, df_text)
+        batch_image = df_image.to_dict(orient="records")
+        output_image = image_pipeline.batch(batch_image)
+        output.extend(parse_pipeline_output(output_image, 'image'))
+    except Exception as e:
+        logger.exception("[ERROR] Failed in image pipeline: %s", e)
+
+    return pd.DataFrame(output)
+
+
+def load_input_data(scope: str, source: str) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """Loads input CSV data for both text and image entries.
+
+    Args:
+        scope: Project scope (e.g., brand or report scope).
+        source: Specific source identifier.
+
+    Returns:
+        Tuple of (df_text, df_image) DataFrames.
+    """
+
+    csv_filename = os.path.join(get_datafetch(), scope, source, STEP_2_TEXT_FILENAME)
+    df_text = safe_read_csv(csv_filename)
+    for field in REQUIRED_TEXT_COLUMNS:
+        if field not in df_text.columns:
+            raise ValueError(f"Missing expected column: {field}")
+
+    csv_filename = os.path.join(get_datafetch(), scope, source, STEP_2_IMAGE_FILENAME)
+    df_image = safe_read_csv(csv_filename)
+    df_image.drop(labels=['websearch_text'], axis=1, inplace=True)
+
+    return df_text, df_image
+
+
+def parse_args() -> argparse.Namespace:
+    """Parses CLI arguments.
+
+    Returns:
+        argparse.Namespace: Parsed arguments.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scope', type=str, required=True)
+    parser.add_argument('--source', required=True)
+    parser.add_argument('--model_name', type=str, required=True)
+    parser.add_argument('--search_context_size', type=str, required=True)
+    parser.add_argument('--websearch_model', type=str, required=True)
+
+    return parser.parse_args()
+
+
+def init_websearch_services(websearch_model: str, search_context_size: str) -> WebSearchService:
+    """Initializes the web search service.
+
+    Args:
+        websearch_model: The OpenAI model name to use.
+        search_context_size: Context size for the web search.
+
+    Returns:
+        An initialized instance of WebSearchService.
+
+    Raises:
+        EnvironmentError: If the OPENAI_API_KEY is missing.
+    """
+
+    credential_init()
+    openai_key = os.environ.get('OPENAI_API_KEY')
+    if not openai_key:
+        raise EnvironmentError("Missing OPENAI_API_KEY in environment variables.")
+    client = OpenAI(api_key=openai_key)
+
+    websearch_service = WebSearchService(client=client,
+                                         search_context_size=search_context_size,
+                                         model=websearch_model)
+
+    return websearch_service
+
+
+def build_extraction_pipeline(model_name: str) -> Runnable:
+    """Constructs the extraction pipeline from model and prompt.
+
+    Args:
+        model_name: Name of the model to use.
+
+    Returns:
+        A LangChain Runnable pipeline.
+    """
+
+    model = model_activation(model_name=model_name)
+    extract_prompt = build_extraction_prompt()
+    extract_pipeline = extract_prompt | model | output_parser
+
+    return extract_pipeline
+
+
+def save_output_df(output_df: pd.DataFrame, scope: str, source: str):
+    """Saves the processed output DataFrame to a CSV file.
+
+    Args:
+        output_df: Final DataFrame containing parsed data.
+        scope: The scope used for data directory structure.
+        source: The source used for data directory structure.
+    """
 
     output_df.drop(labels=['if_strategy', 'text', 'signature'], axis=1, inplace=True)
 
@@ -228,16 +343,32 @@ def main(scope: str, source: str, model_name: str, search_context_size: str,
     output_df.to_csv(filename, index=False)
 
 
+def main():
+    """Main function to orchestrate the ETL pipeline."""
+    args = parse_args()
+
+    df_text, df_image = load_input_data(scope=args.scope, source=args.source)
+
+    websearch_service = init_websearch_services(args.websearch_model, args.search_context_size)
+
+    websearch_text_runnable = RunnableLambda(partial(websearch_text, websearch_engine=websearch_service))
+    websearch_image_runnable = RunnableLambda(partial(websearch_image, websearch_engine=websearch_service))
+
+    extract_pipeline = build_extraction_pipeline(model_name=args.model_name)
+
+    websearch_text_pipeline_ = RunnablePassthrough.assign(text=websearch_text_runnable) | RunnablePassthrough.assign(
+        results=extract_pipeline)
+
+    websearch_image_pipeline_ = RunnablePassthrough.assign(text=websearch_image_runnable) | RunnablePassthrough.assign(
+        results=extract_pipeline)
+
+    output_df = run_pipeline(df_text=df_text, df_image=df_image, text_pipeline=websearch_text_pipeline_,
+                             image_pipeline=websearch_image_pipeline_)
+
+    save_output_df(output_df=output_df, scope=args.scope, source=args.source)
+
+
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--scope', type=str, required=True)
-    parser.add_argument('--source', required=True)
-    parser.add_argument('--model_name', type=str, required=True)
-    parser.add_argument('--search_context_size', type=str, required=True)
-    parser.add_argument('--websearch_model', type=str, required=True)
-    args = parser.parse_args()
-
-    main(scope=args.scope, source=args.source, model_name=args.model_name,
-         search_context_size=args.search_context_size, websearch_model=args.websearch_model)
+    main()
 

@@ -1,23 +1,25 @@
 """Main pipeline for verifying brand names using LangChain and websearch."""
 import argparse
-import os
 import logging
+import os
 import sys
 from functools import partial
 from typing import List, Dict, Tuple
 
 import pandas as pd
-from textwrap import dedent
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda, Runnable
+from langchain_core.runnables import RunnablePassthrough, Runnable
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
+from textwrap import dedent
 
-from src.logic.product_news import STEP_3_FILENAME
-from src.io.path_definition import get_datafetch
-from src.logic.product_news.websearch_service import activate_websearch_service, WebSearchService
-from src.logic import build_standard_chat_prompt_template
 from src.initialization import model_activation
+from src.io.path_definition import get_datafetch
+from src.logic import build_standard_chat_prompt_template
+from src.logic.product_news import STEP_3_FILENAME
+from src.logic.product_news.websearch_service import activate_websearch_service, WebSearchService
+
+
 
 
 logging.basicConfig(level=logging.INFO)
@@ -254,24 +256,33 @@ def save_output(df_text: pd.DataFrame, df_image: pd.DataFrame, results_df: pd.Da
         final_df.to_excel(writer, sheet_name=source, index=False)
 
 
-def main(scope: str, source: str, model_name: str, search_context_size: str, websearch_model: str):
-    """
-    Entrypoint for running the pipeline end-to-end.
+def parse_args() -> argparse.Namespace:
+    """Parses CLI arguments.
 
-    Args:
-        scope: Folder scope for I/O.
-        source: Input/output source name.
-        model_name: Chat model identifier.
-        search_context_size: Websearch context size.
-        websearch_model: Websearch model identifier.
+    Returns:
+        argparse.Namespace: Parsed arguments.
     """
-    df = prepare_data(scope=scope, source=source)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--scope', type=str, required=True)
+    parser.add_argument('--source', required=True)
+    parser.add_argument('--model_name', type=str, required=True)
+    parser.add_argument('--search_context_size', type=str, required=True)
+    parser.add_argument('--websearch_model', type=str, required=True)
+
+    return parser.parse_args()
+
+
+def main():
+
+    args = parse_args()
+
+    df = prepare_data(scope=args.scope, source=args.source)
 
     df_image = image_row_selection(df)
 
-    model, websearch_model = initialize_services(model_name=model_name,
-                                                 websearch_model=websearch_model,
-                                                 search_context_size=search_context_size)
+    model, websearch_model = initialize_services(model_name=args.model_name,
+                                                 websearch_model=args.websearch_model,
+                                                 search_context_size=args.search_context_size)
 
     pipeline = build_pipeline(model=model, websearch_service=websearch_model )
 
@@ -279,24 +290,9 @@ def main(scope: str, source: str, model_name: str, search_context_size: str, web
 
     results_df = run_pipeline(pipeline=pipeline, batch=batch)
 
-    save_output(df_text, df_image, results_df, scope, source)
+    save_output(df_text, df_image, results_df, args.scope, args.source)
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--scope', type=str, required=True)
-    parser.add_argument('--source', required=True)
-    parser.add_argument('--model_name', type=str, required=True)
-    parser.add_argument('--search_context_size', type=str, required=True)
-    parser.add_argument('--websearch_model', type=str, required=True)
-    args = parser.parse_args()
-
-    scope = args.scope
-    source = args.source
-    model_name = args.model_name
-    search_context_size = args.search_context_size
-    websearch_model = args.websearch_model
-
-    main(scope=scope, source=source, model_name=model_name,
-         search_context_size=search_context_size, websearch_model=websearch_model)
+    main()

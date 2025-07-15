@@ -19,7 +19,7 @@ from pydantic import BaseModel, Field
 
 from src.initialization import model_activation
 from src.io.path_definition import get_datafetch
-from src.logic.trend_week_report import build_standard_chat_prompt_template
+from src.logic import build_standard_chat_prompt_template
 from src.logic.product_news import STEP_1_FILENAME, MAX_CONCURRENCY, STEP_2_TEXT_FILENAME
 
 logging.basicConfig(level=logging.INFO)
