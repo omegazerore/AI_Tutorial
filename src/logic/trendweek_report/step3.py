@@ -8,9 +8,9 @@ from datetime import datetime
 
 import mlflow
 
-from src.logic.trend_week_report.constants import Constants
-from src.logic.trend_week_report.utils.paths import resolve_report_raw_path
-from src.logic.trend_week_report.utils.run_utils import load_run_id
+from src.logic.trendweek_report.constants import Constants
+from src.logic.trendweek_report.utils.paths import resolve_report_raw_path
+from src.logic.trendweek_report.utils.run_utils import load_run_id
 
 
 logging.basicConfig(level=logging.INFO)

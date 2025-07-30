@@ -1,0 +1,43 @@
+Realistic Pony Diffusion - V2:
+  Positive: score_9, score_8_up, score_7_up, source_photo, source_anime, 1girl, an anime-like beautiful japanese girl,
+  ulzzang, lustry skin texture, pale skin tone, photography, realistic, hyperrealistic, ultrarealistic, 
+  absurd resolution
+  Negative: score_6, score_5, score_4, score_3, score_2, score_1, source_pony, source_furry, source_cartoon, western,
+  muscular female, ugly face, man, masculine. pony_negativeV2, zPDXL-neg, EasynegativeV2, bad-hands-5, 
+  verybadimagenegative_v1.3, ng_deepnegative_v1_75t, BadDreamFastNegativeV2, UnrealisticDream, bad-picture-chill-75v, 
+  low res, blurry face, monochrome, unfinished, sketch, greyscale, ugly, old, irregular
+  Optional:
+    face: large eyes, large pupils, translucent skin texture, red lips, a mesmerizing beautiful japanese girl
+    hairstyle: twin ponytails, high ponytail, low ponytail, bangs, french curls, big wavy hair, ahoge, twin drills, sidelocks
+    makeup: mascara, heavy makeup, perfect makeup, smoky makeup, smoky eyeshadow, blush
+    expression: moaning in pleasure, orgasm expression, pleasure expression
+    photography style: documentary photography
+    pose:
+      body: all fours, crossed_legs_(lying), crossed_legs_(sitting), kneeling, bending knee, spreading legs
+      nsfw: mouth holding condom wrapper, mouth holding used condom, bent over, missionary position, straddling,
+      doggystyle position, reverse cowgirl position, `sixty nine position, fellatio, cunnilingus`
+      `looking elsewhere, looking away, (doggystyle position), (((one leg in air))), blowjob, deepthroat, fellatio, gangbang`
+      `looking elsewhere, looking away, (doggystyle position), vaginal penetration, (((one leg in air))), deepthroat, fellatio, gangbang`
+      `looking elsewhere, looking away, (doggystyle position), vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `looking elsewhere, looking away, standing, bent over, vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `looking elsewhere, looking away, missionary position, vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `missionary position, vaginal penetration, (((one leg in air))), (((deepthroat, fellatio, cum out of mouth))), gangsex, ejaculation in vaginal`
+      suspended congress
+      `looking at viewer, tearing, sad face, doggystyle position, bent over on a table, viewed from above, viewed from behind`
+      `looking elsewhere, looking away, suspended congress, carried position, bent over, deepthroat, fellatio, vaginal sex, gangsex`
+      hand: hands on breasts, hands on butts, hands behind head
+    dress:
+        upper: `bra lift, nipple`, crochet sweater, sailor suit, tank top, detached sleeves, apron, off-shoulder, veil,
+      `harem dancer outfits, breasts curtains, navel, underboob`, `breast cutout, cleavage`
+        skirt: pleated skirt, mini skirt, pencil skirt, high slit skirt, pelvic curtain
+        panty: panty pull, thong
+        legs: loose socks, thighhighs, stockings, pantyhose, garter stockings, asymmetrical legwear, fishnet thighhigh
+        attire: lingerie, negligee, kimono, gothic lolita dress, cheongsam, maid dress, race queen attire, race queen outfit,
+        office lady outfit, nurse outfit, wedding gown, leotard, latex suit, mechanical suit, sorceress outfit, nun outfit
+    nsfw topic: japanese pornography, forced sex, gangsex, fellatio, titjob, handjob, gangbang, vaginal penetration,
+    foot job, vaginal beads in vaginal, `female masturbation with dildo, dildo in pussy`, female orgasm, 
+    `female masturbation with vibrator, vibrator in pussy`, female masturbation, orgasm, female ejaculation, 
+    excessive pussy juice, excessive pussy juice on inner thigh, cum in vagina, fingering pussy, cum on face, cum in mouth,
+    others: depth of field, underboob, sideboob, lewd, poker table
+Prompt for western girl:
+  score_9, score_8, score_7, score_8_up, score_7_up, source_photo, 1girl, russian, feminine, youthful, super model, high fashion, blonde hair, photography, realistic, hyperrealistic, ultrarealistic, absurd resolution

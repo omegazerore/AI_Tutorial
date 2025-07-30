@@ -1,0 +1,32 @@
+Realistic Pony Diffusion - V3:
+  Positive: 1girl, solo, score_9, score_8_up, score_7_up, source_anime, high-definition 8k, cg wallpaper
+  Negative: score_6, score_5, score_4, score_3, source_pony, source_furry, verybadimagenegative_v1.3, bad-picture-chill-75v, bad_pictures, bad-hands-5, EasynegativeV2
+  Optional:
+    face: reflective eyes
+    body:
+    hairstyle: ponytail, twin drills, bangs
+    makeup: running mascara
+    expression: tearing up, crying_tear, tearful, adorable, biting lip, nose blush,
+    style: street photography, Splash pigment effect, cybernetic illuminations, Art nouveau, Neo-Pop, environmental portrait,
+    graffiti art, concept art, silhouette art, Paisley patterns, Goblincore, Gothic Art, ukiyo-e, sumi-e
+    point of view shot (pov): from below, low angle shot, foot focus, from above, profile view
+    scene: swimpool, magic circle
+    pose:
+      body: crossed_leg_(sitting), laying on stomach, `skirt lift, lifted by self`, kneeling
+      nsfw:
+      hand:
+    dress:
+        skirt: mini skirt, pleated skirt, pelvic curtain, pencil skirt, high slit skirt,
+        panty: thong, panty pull
+        legs: loose socks, thighhighs, garter stockings, stirrup legwear, pantyhose, stockings, fishnet thighhigh
+        shoes: highheels,
+        attire: lingerie, negligee, race queen attire, maid dress, cheongsam, wedding gown, gothic lolita dress, frilled dress, succubus, vampire, witch,
+                sorceress, nun, office lady, nurse, kimono, latex suit, mechanical suit, swimsuit, bikini, leotard, catsuit, bunny, schoolgirl, school uniform, 
+                armor, `harem dancer outfits, breasts curtains, navel, underboob`,  virgin killer sweater, unbuttoned shirt, knotted shirt,
+                crochet sweater, sailor suit, tank top, apron, winter coat
+        accessories: detached sleeves, veil, backless
+    nsfw topic:
+    others: depth of field,
+    questionable:
+Prompt for western girl:
+  score_9, score_8, score_7, score_8_up, score_7_up, source_photo, 1girl, russian, feminine, youthful, super model, high fashion, blonde hair, photography, realistic, hyperrealistic, ultrarealistic, absurd resolution

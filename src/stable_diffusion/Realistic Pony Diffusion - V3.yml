@@ -1,0 +1,49 @@
+Realistic Pony Diffusion - V3:
+  Positive: score_9, score_8_up, score_7_up, source_photo, source_anime, 1girl, an anime-like beautiful japanese girl, ulzzang, lustry skin texture, pale skin tone, photography, realistic, hyperrealistic, ultrarealistic, absurd resolution,
+  Negative: score_6, score_5, score_4, score_3, score_2, score_1, source_pony, source_furry, source_cartoon, source_anime, western, muscular female, ugly face, ugly, verybadimagenegative_v1.3, bad-picture-chill-75v, bad_pictures, bad-hands-5, EasynegativeV2, blurry face
+  Optional:
+    face: large eyes, large pupils, red lips, tape gag over mouth (strong lips as negative prompt)
+    body: underboob, sideboob, breasts, large breasts, navel,
+    hairstyle: twin ponytails, high ponytail, low ponytail, bangs, french curls, big wavy hair, ahoge, twin drills, sidelocks
+    makeup: mascara, heavy makeup, perfect makeup, smoky makeup, smoky eyeshadow, blush
+    expression: moaning in pleasure, orgasm expression, pleasure expression, (scared|wince|wide eyes|rolling eyes), tearing up, crying_tear, tearful, adorable, biting lip, nose blush,
+    photography style: documentary photography, portrait photography, fashion photography, street photography, candid photography
+    point of view shot (pov): viewed from below, viewed from above, viewed from side, viewed from behind, viewed from front, foot focus
+    scene: poker table,
+    pose:
+      body: all fours, crossed_legs_(lying), crossed_legs_(sitting), kneeling, bending knee, spreading legs, laying on stomach,
+            sitting with one's arm about one's knee, face down ass up.
+      nsfw: mouth holding condom wrapper, mouth holding used condom, bent over, missionary position, straddling,
+      doggystyle position, reverse cowgirl position, `sixty nine position, fellatio, cunnilingus`
+      `looking elsewhere, looking away, (doggystyle position), (((one leg in air))), blowjob, deepthroat, fellatio, gangbang`
+      `looking elsewhere, looking away, (doggystyle position), vaginal penetration, (((one leg in air))), deepthroat, fellatio, gangbang`
+      `looking elsewhere, looking away, (doggystyle position), vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `looking elsewhere, looking away, standing, bent over, vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `looking elsewhere, looking away, missionary position, vaginal penetration, (((one leg in air))), ((deepthroat, fellatio)), gangsex`
+      `missionary position, vaginal penetration, (((one leg in air))), (((deepthroat, fellatio, cum out of mouth))), gangsex, ejaculation in vaginal`
+      `viewed from side, looking elsewhere, looking away, lie on side, (((one leg in air))), blowjob, deepthroat, fellatio, gangbang, vaginal sex`
+      suspended congresss
+      `looking at viewer, tearing, sad face, doggystyle position, bent over on a table, viewed from above, viewed from behind`
+      `looking elsewhere, looking away, suspended congress, carried position, bent over, deepthroat, fellatio, vaginal sex, gangsex`
+      `hogtied, laying on stomach, tape gag over mouth, ((arms bound behind back, legs bound, feet up, thighs bound))`
+      `viewed from side, looking elsewhere, looking away, lie on side, (((one leg in air))), blowjob, deepthroat, fellatio, gangbang, vaginal sex`
+      `viewed from side, looking elsewhere, looking away, doggystyle position, (((one leg in air))), blowjob, deepthroat, fellatio, gangbang`
+      `arms bound behind back, legs bound, feet up, thighs bound, hogtied`
+       `skirt lift, lifted by self, viewed from below`
+      hand: hands on breasts, hands on butts, hands behind head, arms bound behind back
+    dress:
+        upper: `bra lift, nipple`, crochet sweater, sailor suit, tank top, detached sleeves, apron, off-shoulder, veil, midriff, navel
+      `harem dancer outfits, breasts curtains, navel, underboob`, `breast cutout, cleavage`, virgin killer sweater, 
+      unbuttoned shirt, knotted shirt, strapless tube top
+        skirt: pleated skirt, mini skirt, pencil skirt, high slit skirt, pelvic curtain
+        panty: panty pull, thong, unbuttoned denim shorts
+        legs: loose socks, thighhighs, stockings, pantyhose, garter stockings, asymmetrical legwear, fishnet thighhigh, stirrup legwear
+        attire: lingerie, negligee, kimono, gothic lolita dress, cheongsam, maid dress, race queen attire, race queen outfit,
+        office lady outfit, nurse outfit, wedding gown, leotard, latex suit, mechanical suit, sorceress outfit, nun outfit
+    nsfw topic: japanese pornography, forced sex, gangsex, fellatio, titjob, handjob, gangbang, vaginal penetration,
+    foot job, vaginal beads in vaginal, `female masturbation with dildo, dildo in pussy`, female orgasm, 
+    `female masturbation with vibrator, vibrator in pussy`, female masturbation, orgasm, female ejaculation, 
+    excessive pussy juice, excessive pussy juice on inner thigh, cum in vagina, fingering pussy, cum on face, cum in mouth,
+    others: depth of field
+Prompt for western girl:
+  score_9, score_8, score_7, score_8_up, score_7_up, source_photo, 1girl, russian, feminine, youthful, super model, high fashion, blonde hair, photography, realistic, hyperrealistic, ultrarealistic, absurd resolution

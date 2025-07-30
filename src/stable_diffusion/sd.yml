@@ -1,0 +1,133 @@
+PONY:
+  useful prompt: rating_explicit, uncensored, zettai ryouiki
+  Realistic:
+    ChacolSemiRealPonyMixXL:
+      Positive: 1girl, score_9, score_8_up, score_7_up, source_anime, an ethereal and mesmerizing beautiful face
+      Negative: pony_negativeV2, score_3, score_4, score_5, score_6, source_furry, source_pony, source_cartoon, western, worst quality, low quality, blurry, sketch artifacts, pony_negativeV2, zPDXL-neg
+    AniReal Pony - V3:
+      Positive: 1girl, score_9, score_8_up, score_7_up, source_anime, an ethereal and mesmerizing beautiful face
+      Negative: pony_negativeV2, score_3, score_4, score_5, score_6, source_furry, source_pony, source_cartoon, western, worst quality, low quality, blurry, sketch artifacts, pony_negativeV2, zPDXL-neg
+      Optional: masterpiece, best quality
+    Realistic Pony Diffusion - V2:
+      Positive: score_9, score_8_up, score_7_up, source_photo, source_anime, 1girl, an anime-like beautiful japanese girl,
+      ulzzang, lustry skin texture, pale skin tone, photography, realistic, hyperrealistic, ultrarealistic, absurd resolution,
+      Negative: score_6_up, score_5_up, score_4_up, source_pony, source_furry, source_cartoon, western, muscular female, ugly face, man, masculine. pony_negativeV2, zPDXL-neg, EasynegativeV2, bad-hands-5, verybadimagenegative_v1.3, ng_deepnegative_v1_75t, BadDreamFastNegativeV2, UnrealisticDream, bad-picture-chill-75v
+      Optional:
+        face: large eyes, large pupils, translucent skin texture, red lips, a mesmerizing beautiful japanese girl
+        hairstyle: twin ponytails, high ponytail, low ponytail, bangs, french curls, big wavy hair, ahoge, twin drills, sidelocks
+        makeup: mascara, heavy makeup, perfect makeup, smoky makeup, smoky eyeshadow, blush
+        expression: moaning in pleasure, orgasm expression, pleasure expression
+        pose:
+          body: all fours, crossed_legs_(lying), crossed_legs_(sitting), kneeling, bending knee, spreading legs
+          nsfw: mouth holding condom wrapper, mouth holding used condom, bent over, missionary position, straddling,
+          doggystyle position, reverse cowgirl position, `1girl, 1boy, fellatio, cunnilingus, sixty nine position, side view`
+          hand: hands on breasts, hands on butts, hands behind head
+        dress:
+            upper: `bra lift, nipple`, crochet sweater, sailor suit, tank top, detached sleeves, apron, off-shoulder
+            skirt: pleated skirt, mini skirt, pencil skirt, high slit skirt, pelvic curtain
+            panty: panty pull, thong
+            legs: loose socks, thighhighs, stockings, pantyhose, garter stockings, asymmetrical legwear
+            attire: lingerie, negligee, kimono, gothic lolita dress, cheongsam, maid dress, race queen attire, race queen outfit,
+            office lady outfit, nurse outfit, wedding gown, leotard, latex suit, mechanical suit, sorceress outfit,
+        nsfw topic: japanese pornography, forced sex, gangsex, fellatio, titjob, handjob, gangbang, vaginal penetration,
+        foot job, vaginal beads in vaginal, `female masturbation with dildo, dildo in pussy`, female orgasm, 
+        `female masturbation with vibrator, vibrator in pussy`, female masturbation, orgasm, female ejaculation, 
+        excessive pussy juice, excessive pussy juice on inner thigh, cum in vagina, fingering pussy, cum on face, cum in mouth
+        others: depth of field, underboob, sideboob
+        questionable:
+    FluxCore ~ PonyReal:
+      Positive: 1girl, feminine, score_9, score_8_up, score_7_up, source_realistic, photograph, realistic, hyperrealistic, ultrarealistic, absurd resolution
+      Negative: score_6, score_5, score_4, score_3, score_2, score_1, source_pony, source_furry, source_cartoon, western, muscular female, ugly face, man, masculine, pony_negativeV2, zPDXL-neg, EasynegativeV2, bad-hands-5, verybadimagenegative_v1.3, ng_deepnegative_v1_75t, BadDreamFastNegativeV2, UnrealisticDream, bad-picture-chill-75v
+      Optional:
+        face: ulzzang, large eyes, large pupils, translucent skin texture, pale skin tone, lustry skin texture
+        hairstyle: twin ponytails, high ponytail, low ponytail, bangs, french curls, big wavy hair, ahoge
+        makeup: mascara, heavy makeup, perfect makeup, smoky makeup, smoky eyeshadow, blush,
+        expression: moaning in pleasure, orgasm expression, pleasure expression
+        pose:
+          body: all fours, crossed_legs_(lying), crossed_legs_(sitting), kneeling, w-sitting,  bending knee, spreading legs
+          nsfw: mouth holding condom wrapper, mouth holding used condom, bent over, missionary position, straddling,
+          doggystyle position, reverse cowgirl position, `1girl, 1boy, fellatio, cunnilingus, sixty nine position, side view`
+          hand: hands on breasts, hands on butts, hands behind head
+        dress:
+          upper: `bra lift, nipple`, crochet sweater, sailor suit, serafuku, tank top, detached sleeves, apron
+          skirt: pleated skirt, mini skirt, pencil skirt, high slit skirt
+          panty: panty pull, thong
+          legs: loose socks, thighhighs, stockings, pantyhose, garter stockings, asymmetrical legwear
+          attire: lingerie, negligee, kimono, gothic lolita dress, cheongsam, maid dress, race queen attire, race queen outfit,
+          office lady outfit, nurse outfit, wedding gown, leotard, latex suit, mechanical suit, sorceress outfit,
+        nsfw topic: japanese pornography, forced sex, gangsex, fellatio, titjob, handjob, gangbang, vaginal penetration,
+        foot job, vaginal beads in vaginal, `female masturbation with dildo, dildo in pussy`, female orgasm
+        `female masturbation with vibrator, vibrator in pussy`, female masturbation, female ejaculation, orgasm, 
+        excessive pussy juice, suggestive fluid, excessive pussy juice on inner thigh, cum in vagina, fingering pussy,
+        cum on face, cum in mouth
+        others: depth of field, underboob, sideboob
+        questionable: lustful expression, sultry expression, japanese pornography, japanese pornography aesthetic,
+        japanese pornography protagonist
+    Pony - Asian Beauty Mix:
+      Positive: score_9, score_8_up, score_7_up, 1girl, absurd resolution, 8k, hd, ulzzang, lustry skin texture,
+      pale skin tone, realistic, an anime-like beautiful japanese girl, a mesmerizing beautiful japanese girl, 
+      large eyes, mascara, glossy lips
+      Negative: score_6, score_5, score_4, western, pony, furry, source_pony, source_furry, source_cartoon, ugly face,
+      pony_negativeV2, zPDXL-neg, EasynegativeV2, bad-hands-5, verybadimagenegative_v1.3, ng_deepnegative_v1_75t, 
+      BadDreamFastNegativeV2, UnrealisticDream, bad-picture-chill-75v, monochrome, unfinished, sketch, greyscale, 
+      monochrome, low res, blurry face
+      Optional:
+        face: a mesmerizing beautiful japanese girl, large eyes, glossy lips
+        hairstyle: twin ponytails, high ponytail, low ponytail, bangs, big wavy hair, ahoge, twin drills, sidelocks
+        makeup: mascara, smoky makeup, smoky eyeshadow, blush
+        pose:
+          body: all fours, crossed_legs_(lying), crossed_legs_(sitting), kneeling, w-sitting, bending knee, spreading legs
+          hand: hands on breasts, hands on butts, hands behind head
+        dress:
+          upper: crochet sweater, sailor suit, tank top, detached sleeves, apron, off-shoulder, veil
+          skirt: pleated skirt, mini skirt, pencil skirt, high slit skirt, pelvic curtain
+          panty: panty pull
+          legs: loose socks, thighhighs, stockings, pantyhose
+          attire: lingerie, negligee, kimono, gothic lolita dress, cheongsam, maid dress, race queen attire, race queen outfit,
+          office lady outfit, nurse outfit, wedding gown, leotard, latex suit, nun outfit
+    HunYuanDiT:
+      Positive: a full body shot of a breathtakingly glamorous girl with a mesmerizing beautiful face and intricate
+      facial features. Her lustry skin texture and pale skin tone accentuating her youthfulness. realistic, photography, 
+      hyperrealistic, ultrarealistic, ulzzang, absurdres
+      A professional photography of breathtakingly glamorous japanese idol wearing casual dress with short skirt for a heat summer. 
+      A youthful face, featured with porcelain skin tone and lustry skin texture, emanating a mesmerizing beauty.
+      Negative: Cartoon, CGI, Render, 3D, Artwork, Illustration, 3D render, Cinema 4D, Artstation, Octane render,
+      Painting, Oil painting, Anime , 2D, Sketch, Drawing, Bad photography, Bad photo, Deviant art, Disfigured, 
+      Poorly drawn face, Ugly body, Body horror, Bad hands, Poorly drawn hands, Fused fingers, Fused hands, 
+      Too many fingers, masculine female, man
+      Optional:
+        dress: Adorned in an exquisite wedding gown combined with high-slit and low cut design revealing cleavage accentuating her large breast. 
+               The luxurious necklace and head ornament imply her lavish life style.
+               She is wearing a casual dress and enjoying her vacation in a small town close to a sea. The casual dress is combines with tropical island aesthetic elements
+               Adorned with business attire and black thighhigh, emanating her playful spirit.
+               She wears gothic lolita dress with miniskirt and black stockings, emanating her playful spirit.
+               She wears a see-through hanfu with detached sleeves accentuating her elegance. The low-cut design reveals cleavage, emanating her sexual attractiveness and accentuating her large breasts.
+        topic: While enjoying japanese cuisine in an anqitue japanese restaurant with very long history, she is looking at viewer captatively. sushi and nigiri on the table.
+               Eating a hamburger in a steakhouse with a pint of beer on the table.
+               Drinking tea in a tea house in a rainy day and looking at viewer captatively
+    FLUX.1 dev:
+      Hyperparameters:
+        Sampler & Scheduler: (dpmpp_2m, sgm_uniform), (euler, beta)
+        clip skips: 1
+        CFG: 1.5-2.0
+        FluxGuide: 3.0-4.0
+      Positive: a breathtakingly glamorous girl, a mesmerizing beautiful face, realistic, photography, hyperrealistic, ultrarealistic, ulzzang
+      Negative: verybadimagenegative_v1.3, bad-picture-chill-75v, bad_pictures, bad-hands-5, EasynegativeV2
+      Optional:
+        face: A Japanese idol with a breathtakingly glamorous ulzzang appearance,  She has a slim, v-shaped face with large, almond-shaped eyes that sparkle with a lustrous, captivating charm, exuding an aura of youth and ethereal beauty. Her expression is innocent yet alluring, with flawless porcelain skin that enhances her delicate, anime-inspired features. The setting is carefully crafted to complement her enchantment, with soft, diffused lighting that accentuates her mesmerizing, glamorous presence, creating a dreamy and youthful, anime-like allure.
+        makeup: Her makeup was flawless, with expertly blended smoky eyeshadow that created a captivating and sultry effect. The dark, smoldering tones of the eyeshadow were meticulously applied, gradually transitioning from deep black at the lash line to softer grays toward the brow bone, perfectly accentuating her eyes. A touch of shimmer on the inner corners added a hint of allure, while the rest of her makeup remained understated, allowing the smoky eyes to be the focal point of her look.
+        hairstyle: high ponytail, bangs, sidelocks, twin drills
+        pose:
+          body: kneeling
+        dress:
+          upper: sailor suit, apron, veil
+          skirt: miniskirt
+          leg: black stockings
+          attire: gothic lolita attire, cheongsam, hanfu, flight attendant outfit, nun outfit, maid outfit, race queen outfit
+    Ponygine XL - Checkpoint:
+      Positive: 1girl, score_9, score_8_up, score_7_up, source_anime, an ethereal and mesmerizing beautiful face, hyperrealistic, ultrarealistic
+      Negative: score_3, score_4, score_5, score_6, source_furry, source_pony, source_cartoon, painting, illustration, 3D, 3D rendering, western, negativeXL_D, unaestheticXLv13
+
+A professional portrait photography capturing a breathtakingly glamorous girl with a mesmerizing beautiful face, drinking coffee in a coffee. ulzzang
+A professional portrait photography capturing a breathtakingly glamorous girl with a mesmerizing beautiful face, drinking coffee in a coffee shop. ulzzang
+a Japanese idol with a breathtakingly glamorous ulzzang appearance. She should have a slim, V-shaped face and large, almond-shaped eyes that exude an aura of youth and ethereal beauty. Her expression should be innocent and captivating, with flawless porcelain skin that enhances her delicate features. The setting should complement her charm, with soft lighting that highlights her glamorous yet youthful presence.
