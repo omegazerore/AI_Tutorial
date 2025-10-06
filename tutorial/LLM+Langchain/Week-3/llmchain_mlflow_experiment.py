@@ -26,7 +26,6 @@ class LLMChainModel(mlflow.pyfunc.PythonModel):
         )
         
         # Create the LLMChain with the specified model and prompt
-        # 最早我也是用這個
         self.pipeline = LLMChain(llm=model, prompt=prompt)
 
     def predict(self, context, model_input):

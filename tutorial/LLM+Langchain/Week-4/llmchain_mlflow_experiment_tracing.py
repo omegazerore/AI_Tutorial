@@ -2,6 +2,7 @@ import os
 from textwrap import dedent
 
 import mlflow
+import pandas as pd
 from mlflow.models import set_model
 from langchain.chains import LLMChain
 from langchain_openai import ChatOpenAI
@@ -120,7 +121,6 @@ class LLMChainModel(mlflow.pyfunc.PythonModel):
     
     def load_context(self, context):
 
-        # 固定套路: 把你的模型塞在這裡
         # Attach the run_id so all logs go into this run
         self.mlflow_cb = MlflowCallbackHandler(
         experiment=os.environ['experiment'],
@@ -133,7 +133,7 @@ class LLMChainModel(mlflow.pyfunc.PythonModel):
 
         self.pipeline = RunnablePassthrough.assign(feedback=feedback_pipeline)|revision_pipeline|RunnableLambda(lambda x: x.name)
         
-    def predict(self, context, model_input):
+    def predict(self, context, model_input: pd.DataFrame):
 
         output = self.pipeline.invoke({"article": model_input.loc[0]['article'],
                                        "title": model_input.loc[0]['title']})

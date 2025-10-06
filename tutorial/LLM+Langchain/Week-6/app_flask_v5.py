@@ -18,7 +18,7 @@ client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 app = Flask(__name__)
 
 
-def call_tts(input_) -> None:
+def call_tts(input_):
     response = client.audio.speech.create(
     model="gpt-4o-mini-tts",
     voice="alloy",
@@ -40,7 +40,7 @@ def whisper():
     audio_file = io.BytesIO(audio_bytes)
     audio_file.name = "request.wav"
     
-    whisper_output = client.audio.translations.create(
+    whisper_output = client.audio.transcriptions.create(
     model="whisper-1", 
     file=audio_file,
     response_format="text",
