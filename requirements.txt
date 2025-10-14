@@ -36,3 +36,4 @@ unidic-lite
 openai-agents=0.3.3
 openai-agents[litellm]
 litellm[proxy]
+jupyterlabcodetoc
