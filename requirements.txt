@@ -12,7 +12,7 @@ langchain-core==0.3.45
 langchain-community==0.3.19
 langchain-openai==0.3.9
 langchain-ollama==0.2.3
-openai==1.76.0
+openai==1.109.1
 langchain-deepseek
 sentence-transformers
 langserve[all]
@@ -29,7 +29,11 @@ httpx==0.27.2
 sentencepiece
 pillow
 uvicorn
-langchain-google-genai==2.0.0
+langchain-google-genai==2.1.12
 wikipedia-api
 fugashi
 unidic-lite
+openai-agents=0.3.3
+openai-agents[litellm]
+litellm[proxy]
+jupyterlabcodetoc
