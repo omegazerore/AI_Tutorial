@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Image Psychic</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h2>Image Psychic</h2>
+    <!-- Step 1: Upload -->
+    <form id="uploadForm" enctype="multipart/form-data">
+      <textarea name="prompt" placeholder="Enter your question..." required></textarea>
+      <input type="file" name="images" multiple>
+      <button type="submit">Upload</button>
+    </form>
+
+    <!-- Step 2: Generate -->
+    <button id="generateBtn" disabled>Generate</button>
+
+    <div class="pane">
+      <h3>AI Response:</h3>
+      <pre id="response"></pre>
+    </div>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById("uploadForm");
+    const generateBtn = document.getElementById("generateBtn");
+    const responsePane = document.getElementById("response");
+
+    uploadForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+
+      const response = await fetch("/upload", {
+        method: "POST",
+        body: formData
+      });
+      const result = await response.json();
+      responsePane.textContent = result.message;
+      generateBtn.disabled = false; // Enable Generate button after upload
+    });
+
+    generateBtn.addEventListener("click", async function() {
+      const response = await fetch("/generate", { method: "POST" });
+      const result = await response.json();
+      responsePane.textContent = result.ai_response;
+    });
+  </script>
+</body>
+</html>
