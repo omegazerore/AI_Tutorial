@@ -58,7 +58,7 @@ os.environ['experiment'] = experiment
 os.environ['run_id'] = run.info.run_id
 os.environ['run_name'] = run_name
 
-loaded_model = mlflow.pyfunc.load_model("models:/Generation_Reflection_Demo/13")
+loaded_model = mlflow.pyfunc.load_model("models:/Generation_Reflection_Demo/1")
 
 @chain
 def final_output_2_ai_message(input_):
