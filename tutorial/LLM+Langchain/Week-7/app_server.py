@@ -20,31 +20,39 @@ from src.initialization import credential_init
 
 #嘗試單純的加入聊天紀錄
 
-template = dedent("""
-
-Answer the following questions as best you can.
-
-You have access to the following tools:
+template = dedent("""\
+Answer the following questions as best you can. You have access to the following tools:
 
 {tools}
 
-Use the following format:
+When you need to use a tool to get knowledge, the vectorstore tools have a high priority than websearch tool.
 
-Question: the input question you must answer
+To use a tool, you MUST strictly follow this format (case-sensitive, exact words)::
 
-Thought: you should always think about what to do
+```
+
+Thought: Do I need to use a tool? Yes
 
 Action: the action to take, should be one of [{tool_names}]
 
 Action Input: the input to the action
 
-Observation: the result of the action
+Observation: [the result of the action]
+
+```
 
 ... (this Thought/Action/Action Input/Observation can repeat N times)
 
-Thought: I now know the final answer
 
-Final Answer: the final answer to the original input question
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+
+```
+
+Thought: Do I need to use a tool? No
+
+Final Answer: [your response here]. The final response should be in Traditional Chinese (繁體中文).
+
+```
 
 Begin!
 
@@ -58,9 +66,11 @@ Thought:{agent_scratchpad}
 """
 )
 
-module = importlib.import_module("tutorial.LLM+Langchain.Week-7.websearch")
+module_math = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.math")
+module_vectorstore = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.vectorstore")
+module_websearch = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.websearch")
 
-tools = [module.SearchTool()]
+tools = [module_math.MathTool(), module_websearch.SearchTool(), module_vectorstore.CodexRetrievalTool()]
 
 prompt = PromptTemplate.from_template(template)
 
