@@ -1,0 +1,4 @@
+openai==2.6.1
+openai-agents==0.4.2
+openai-agents[litellm]==0.4.2
+litellm[proxy]
