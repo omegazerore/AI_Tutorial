@@ -40,6 +40,8 @@ Avoid making assumptions based on demographic, cultural, or political factors.
 Focus exclusively on psychological and aesthetic interpretations related to the images themselves.
 
 The output language should be in traditional Chinese (繁體中文).
+
+Generate the personality profile based on the images:
 """)
 
 @chain

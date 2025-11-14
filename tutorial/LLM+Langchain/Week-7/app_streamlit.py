@@ -64,7 +64,7 @@ input_container = st.container()
 with input_container:
     _ = st.text_input(
         "Type your message...", 
-        key="user_input", 
+        key="user_input",   # Streamlit will store the text box’s current value in: st.session_state.user_input
         on_change=submit,
         # label_visibility="collapsed"  # hides the label above input
     )
@@ -78,29 +78,29 @@ with input_container:
         
         if user_input.strip() != "":
             # Add user message
-            st.session_state.chat_history.append({"content": user_input, "type": "human"})
+            st.session_state.chat_history.append({"content": user_input, "role": "user"})
             
             # Send to Flask
             response = requests.post(
                 FLASK_URL,
-                json={"chat_history": st.session_state.chat_history, "input": user_input}
+                json={"chat_history": st.session_state.chat_history}
             )
 
             # Add AI reply
             if response.status_code == 200:
-                ai_reply = response.json().get("output", "No reply from AI.")
-                st.session_state.chat_history.append({"content": ai_reply, "type": "ai"})
+                ai_reply = response.json().get("messages", "No reply from AI.")
+                st.session_state.chat_history.append({"content": ai_reply[-1]['content'], "role": "ai"})
             else:
                 st.session_state.chat_history.append(
-                    {"content": "Error: Could not get AI reply.", "type": "ai"}
+                    {"content": "Error: Could not get AI reply.", "role": "ai"}
                 )
 
 with chat_container:
     chat_messages = ""
     for msg in st.session_state.chat_history:
-        role = msg["type"]
+        role = msg["role"]
         content = msg["content"]
-        if role == "human":
+        if role == "user":
             # st.markdown(f"**🧑 You:** {content}")
             chat_messages += f"<div class='user-msg'>🧑 <b>You:</b> {content}</div>"
         else:

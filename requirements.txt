@@ -16,6 +16,7 @@ langchain-huggingface==1.0.0
 langchain-google-genai==3.0.0
 langchain-deepseek==1.0.0
 langgraph==1.0.1
+langchain-classic
 sentence-transformers
 langserve[all]
 pydub
@@ -33,3 +34,5 @@ wikipedia-api
 fugashi
 unidic-lite
 jupyterlabcodetoc
+python-docx
+mlflow

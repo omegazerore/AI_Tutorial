@@ -20,6 +20,7 @@ def image_to_base64(file_storage: FileStorage):
 
     return base64.b64encode(file_storage.read()).decode("utf-8")
 
+
 @chain
 def build_image_prompt(image_str):
     """Constructs an image prompt dictionary suitable for backend AI processing.
@@ -33,6 +34,7 @@ def build_image_prompt(image_str):
 
     return {"type": "image",
             "template": {"url": f"data:image/jpeg;base64,{image_str}"}}
+
 
 
 @app.route("/generate", methods=["POST"])
@@ -57,7 +59,7 @@ def generate():
     image_files = request.files.getlist('images')
 
     if not image_files:
-        return jsonify({"ai_response": "No uploaded imagesPlease upload first."})
+        return jsonify({"ai_response": "No uploaded images. Please upload first."})
 
     image_transformation_pipeline_ = image_to_base64|build_image_prompt
 

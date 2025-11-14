@@ -55,6 +55,7 @@ def credential_init():
     os.environ['FAL_KEY'] = credentials['fal_ai_image_caption'].get('api_key')
     os.environ["GOOGLE_API_KEY"] = credentials['gemini'].get('api_key')
     os.environ["OLLAMA_API_KEY"] = credentials['ollama'].get('api_key')
+    os.environ["AURELIO_API_KEY"] = credentials['aurelio'].get('api_key')
 
 
 def model_activation(model_name: str) -> ChatOpenAI:

@@ -6,7 +6,7 @@ from typing import Dict, List, Literal
 from operator import itemgetter
 from textwrap import dedent
 
-import mlflow
+# import mlflow
 import uvicorn
 import pandas as pd
 from fastapi import FastAPI
@@ -123,7 +123,7 @@ add_routes(
 # IMPORTANT: Do not close the run here. Close it when server shuts down.
 # For example, register a shutdown hook:
 
-atexit.register(mlflow.end_run)
+# atexit.register(mlflow.end_run)
 
 
 if __name__ == '__main__':

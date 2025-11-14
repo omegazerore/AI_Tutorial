@@ -13,8 +13,8 @@ import base64
 
 import pandas as pd
 import streamlit as st
-from openai import AsyncOpenAI
-from openai.helpers import LocalAudioPlayer
+# from openai import AsyncOpenAI
+# from openai.helpers import LocalAudioPlayer
 from audiorecorder import audiorecorder
 
 

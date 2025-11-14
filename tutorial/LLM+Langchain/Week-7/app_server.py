@@ -1,70 +1,72 @@
 import importlib
 import os
 from textwrap import dedent
-from typing import List
+from typing import List, Dict
 from datetime import datetime
 
 import uvicorn
+import mlflow
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from langserve import add_routes
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.runnables import chain, Runnable, RunnablePassthrough
+from langchain.agents import create_agent
 from langchain_core.messages import BaseMessage
 
 from src.initialization import credential_init
 
-# from tutorial.LLM+Langchain.Week-7.websearch import SearchTool
-
 #嘗試單純的加入聊天紀錄
 
-template = dedent("""\
-Answer the following questions as best you can. You have access to the following tools:
+experiment = "Week-7"
+uri = "http://127.0.0.1:8080"
 
-{tools}
+mlflow.set_tracking_uri(uri=uri)
+mlflow.set_experiment(experiment)
 
-When you need to use a tool to get knowledge, the vectorstore tools have a high priority than websearch tool.
+mlflow.langchain.autolog()
 
-To use a tool, you MUST strictly follow this format (case-sensitive, exact words)::
+system_prompt = dedent("""
+    Identity & Demeanor
+    You are Magos-Logicus, an entity modeled on the Adeptus Mechanicus’ logic-driven priesthood.
+    Your cognition is defined by:
+    - Extreme rationality
+    - Perfect analytical discipline
+    - Calculation-first reasoning
+    - Emotionless precision
+    - Reverence for knowledge, data integrity, and optimal solutions
+    - A tone that is formal, concise, and techno-litanic (but never roleplays excessively unless asked)
 
-```
+    Core Directives
+    1. Analyze Before Acting:
+       Always break down problems into components, evaluate constraints, and present structured reasoning.
 
-Thought: Do I need to use a tool? Yes
+    2. Optimize for Efficiency:
+       Provide solutions that are minimal in waste, maximal in clarity, and optimal in outcome.
 
-Action: the action to take, should be one of [{tool_names}]
+    3. Eliminate Ambiguity:
+       Seek clarification when required. Certainty is preferred; uncertainty must be quantified.
 
-Action Input: the input to the action
+    4. Use Logic as the Primary Tool:
+       No emotional framing, irrelevant narrative fluff, or poetic description unless explicitly requested.
 
-Observation: [the result of the action]
+    5. Respect Data Integrity:
+       Cite sources, identify assumptions, and avoid false statements.
+       If data is insufficient, state the deficit and propose a method of acquiring required information.
 
-```
+    6. Communicate Like a Mechanicus Logician:
+       - Structured, hierarchical responses
+       - Occasional Machine Cult–flavored phrasing (e.g., “Initiating analysis,” “Processing query,” “Logical determination follows”), keeping professionalism first
+       - No religious/ritualistic content unless user explicitly requests the “full” Mechanicus aesthetic
 
-... (this Thought/Action/Action Input/Observation can repeat N times)
+    Output Format Preference
+    When responding, default to:
+    - Clear step-by-step logic
+    - Tables, bullet lists, or flowcharts when beneficial
+    - Explicit reasoning chains, especially when making recommendations or judgments
 
-
-When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
-
-```
-
-Thought: Do I need to use a tool? No
-
-Final Answer: [your response here]. The final response should be in Traditional Chinese (繁體中文).
-
-```
-
-Begin!
-
-Previous conversation history:
-
-{chat_history}
-
-Question: {input}
-
-Thought:{agent_scratchpad}
-"""
-)
+    Primary Objective
+    Deliver the most precise, analytically optimal, and computationally efficient answer possible to the user’s query.
+""")
 
 module_math = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.math")
 module_vectorstore = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.vectorstore")
@@ -72,13 +74,9 @@ module_websearch = importlib.import_module("tutorial.LLM+Langchain.Week-7.tools.
 
 tools = [module_math.MathTool(), module_websearch.SearchTool(), module_vectorstore.CodexRetrievalTool()]
 
-prompt = PromptTemplate.from_template(template)
-
 credential_init()
 
-model = ChatOpenAI(openai_api_key=os.environ['OPENAI_API_KEY'],
-                   model_name="gpt-4o", temperature=0, 
-                  )
+model = ChatOpenAI(openai_api_key=os.environ['OPENAI_API_KEY'], model_name="gpt-4o", temperature=0, name='llm_model')
 
 # We need to add these input/output schemas because the current AgentExecutor
 # is lacking in schemas.
@@ -87,37 +85,31 @@ class Input(BaseModel):
     Field:
      - 第一個參數 ... 代表 這個欄位是必填的。等同於 required=True。
     """
-    input: str
-    chat_history: List[BaseMessage] = Field(
+    messages: List[Dict] = Field(
         ...
     )
 
 
 class Output(BaseModel):
-    output: str
-    input: str
+    messages: List[BaseMessage] = Field(
+        ...
+    )
 
 
-conversation_agent = create_react_agent(
-    llm=model,
-    tools=tools,
-    prompt=prompt,
-)
+agent = create_agent(name='chatbot',
+                     model=model,
+                     tools=tools,
+                     system_prompt=system_prompt
+                     ).with_types(input_type=Input, output_type=Output)
 
-agent_executor = AgentExecutor(agent=conversation_agent, tools=tools, verbose=True,
-                               handle_parsing_errors=True).with_types(input_type=Input, output_type=Output)
-
-# pipeline = debug#|agent_executor
-
-app = FastAPI(title="conversational ReAct agent chatbot",
+app = FastAPI(title="agent chatbot",
               version="1.0",
               description="A simple api server using Langchain's Runnable interfaces",
 )
 
 add_routes(
     app,
-    agent_executor,
-    # pipeline,
+    agent,
     path="/chatbot",
 )
 
@@ -125,4 +117,4 @@ add_routes(
 
 if __name__ == '__main__':
 
-    uvicorn.run(app, host="localhost", port=8080)
+    uvicorn.run(app, host="localhost", port=8081)
