@@ -36,3 +36,4 @@ unidic-lite
 jupyterlabcodetoc
 python-docx
 mlflow
+gradio
